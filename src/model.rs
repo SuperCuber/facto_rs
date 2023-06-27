@@ -24,7 +24,7 @@ pub struct Position(pub usize, pub usize);
 
 #[derive(Debug, Clone)]
 pub enum GridItem {
-    Building(Building),
+    Building(Building, Direction),
     Rail(Orientation, RailSize),
     Intersection(Intersection, IntersectionType),
 }
@@ -38,25 +38,37 @@ pub enum RailSize {
 #[derive(Debug, Clone)]
 pub struct Intersection {
     item: Option<Item>,
+    cooldown: f64,
 }
 
 #[derive(Debug, Clone)]
 pub enum IntersectionType {
-    // Triple
-    LeftUpRight,
-    UpRightDown,
-    RightDownLeft,
-    DownLeftUp,
+    Triple(Direction),
+    Quad,
+}
 
-    // Quad
-    FourDirection,
+#[derive(Debug, Clone, Copy)]
+pub enum Direction {
+    North,
+    South,
+    East,
+    West,
 }
 
 #[derive(Debug, Clone)]
 pub enum Building {
-    Spawner { item: Item, timer: f64 },
-    Crafter { item: Item, contents: Vec<Item>, timer: f64 },
-    Submitter { contents: Vec<Item> },
+    Spawner {
+        item: Item,
+        timer: f64,
+    },
+    Crafter {
+        item: Item,
+        contents: Vec<Item>,
+        timer: f64,
+    },
+    Submitter {
+        contents: Vec<Item>,
+    },
 }
 
 // === Item ===
@@ -78,7 +90,7 @@ pub struct Train {
 impl GridItem {
     pub fn update(&mut self, update: &Update) {
         match self {
-            GridItem::Building(b) => b.update(update),
+            GridItem::Building(b, _) => b.update(update),
             GridItem::Rail(_, _) => todo!(),
             GridItem::Intersection(_, _) => todo!(),
         }
@@ -88,5 +100,16 @@ impl GridItem {
 impl From<Position> for Vec2 {
     fn from(other: Position) -> Vec2 {
         Vec2::from((other.0 as f32 * CELL_SIZE, other.1 as f32 * CELL_SIZE))
+    }
+}
+
+impl From<&Direction> for f32 {
+    fn from(other: &Direction) -> f32 {
+        match other {
+            Direction::East => PI / 2.0 * 0.0,
+            Direction::North => PI / 2.0 * 1.0,
+            Direction::West => PI / 2.0 * 2.0,
+            Direction::South => PI / 2.0 * 3.0,
+        }
     }
 }

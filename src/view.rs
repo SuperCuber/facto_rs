@@ -1,52 +1,80 @@
-use nannou::{lyon::geom::Angle, prelude::*};
+use nannou::{
+    lyon::{geom::Angle, lyon_tessellation::Orientation},
+    prelude::*,
+};
 
 use crate::{constants::*, model::*};
 
 impl GridItem {
-    pub fn draw(&self, pos: Position, draw: &Draw) {
+    pub fn draw(&self, draw: &Draw) {
         match self {
-            GridItem::Building(b) => b.draw(pos, draw),
-            GridItem::Rail(_, _) => todo!(),
+            GridItem::Building(b, direction) => draw_building(draw, b, direction),
+            GridItem::Rail(orientation, size) => draw_rail(draw, orientation, size),
             GridItem::Intersection(_, _) => todo!(),
         }
     }
 }
 
-impl Building {
-    pub fn draw(&self, pos: Position, draw: &Draw) {
-        match self {
-            Building::Spawner { item, timer } => {
-                const RADIUS: f32 = CELL_SIZE / 6.0;
+pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
+    let draw_rotated = draw.rotate(direction.into());
+    const SIZE: f32 = CELL_SIZE / 3.0;
+    let building_frame = Rect::from_w_h(SIZE, SIZE);
+    let grid_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
 
-                draw.ellipse().color(soften(item.color)).radius(RADIUS);
+    // Rails
+    draw_rotated
+        .y(building_frame.h() / 6.0)
+        .line()
+        .points(building_frame.mid_right() * 0.8, grid_frame.mid_right())
+        .color(BLACK);
+    draw_rotated
+        .y(-building_frame.h() / 6.0)
+        .line()
+        .points(building_frame.mid_right() * 0.8, grid_frame.mid_right())
+        .color(BLACK);
 
-                let arc = nannou::lyon::geom::arc::Arc {
-                    center: (0.0, 0.0).into(),
-                    radii: (RADIUS, RADIUS).into(),
-                    start_angle: Angle::radians(0.0),
-                    sweep_angle: Angle::two_pi() * (timer / item.spawning_time) as f32,
-                    x_rotation: Angle::radians(0.0),
-                };
+    match b {
+        Building::Spawner { item, timer } => {
+            draw.ellipse()
+                .color(soften(item.color))
+                .wh(building_frame.wh());
 
-                draw.path()
-                    .stroke()
-                    .stroke_weight(2.0 * SIZE_UNIT)
-                    .color(item.color)
-                    .points(arc.flattened(0.1).map(|p| Vec2::from((p.x, p.y))));
-            }
-            Building::Crafter {
-                item,
-                contents,
-                timer,
-            } => {
-                const SIZE: f32 = CELL_SIZE / 3.0;
-                draw.rect().color(soften(item.color)).w(SIZE).h(SIZE);
-                draw_loading_square_frame(draw, item.color, (timer / item.crafting_time) as f32, SIZE, 2.0 * SIZE_UNIT);
-            }
-            Building::Submitter { contents } => todo!(),
+            let arc = nannou::lyon::geom::arc::Arc {
+                center: (0.0, 0.0).into(),
+                radii: (SIZE / 2.0, SIZE / 2.0).into(),
+                start_angle: Angle::radians(0.0),
+                sweep_angle: Angle::two_pi() * (timer / item.spawning_time) as f32,
+                x_rotation: Angle::radians(0.0),
+            };
+
+            draw.path()
+                .stroke()
+                .stroke_weight(2.0 * SIZE_UNIT)
+                .color(item.color)
+                .points(arc.flattened(0.1).map(|p| Vec2::from((p.x, p.y))));
         }
+
+        Building::Crafter {
+            item,
+            contents,
+            timer,
+        } => {
+            draw.rect()
+                .color(soften(item.color))
+                .wh(building_frame.wh());
+            draw_loading_square_frame(
+                draw,
+                item.color,
+                (timer / item.crafting_time) as f32,
+                SIZE,
+                2.0 * SIZE_UNIT,
+            );
+        }
+        Building::Submitter { contents } => todo!(),
     }
 }
+
+fn draw_rail(draw: &Draw, orientation: &Orientation, size: &RailSize) {}
 
 // === Utils ===
 
@@ -79,6 +107,9 @@ fn draw_loading_square_frame(draw: &Draw, color: Srgb, completion: f32, wh: f32,
         let line_end = if end < completion { end } else { completion };
         let t = (line_end - start) / line_duration;
         let to = from * (1.0 - t) + to * t;
-        draw.line().points(from, to).color(color).stroke_weight(weight);
+        draw.line()
+            .points(from, to)
+            .color(color)
+            .stroke_weight(weight);
     }
 }

@@ -24,19 +24,25 @@ pub fn generate() -> (Grid, Vec<Item>) {
             if (x + y) % 2 == 0 {
                 grid_items.insert(
                     Position(x, y),
-                    GridItem::Building(Building::Spawner {
-                        item: item.clone(),
-                        timer: 0.0,
-                    }),
+                    GridItem::Building(
+                        Building::Spawner {
+                            item: item.clone(),
+                            timer: 0.0,
+                        },
+                        Direction::South,
+                    ),
                 );
             } else {
                 grid_items.insert(
                     Position(x, y),
-                    GridItem::Building(Building::Crafter {
-                        item: item2.clone(),
-                        contents: vec![],
-                        timer: 0.0,
-                    }),
+                    GridItem::Building(
+                        Building::Crafter {
+                            item: item2.clone(),
+                            contents: vec![],
+                            timer: 0.0,
+                        },
+                        Direction::East,
+                    ),
                 );
             }
         }
