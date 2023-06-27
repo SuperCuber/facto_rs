@@ -24,7 +24,7 @@ impl Building {
                     center: (0.0, 0.0).into(),
                     radii: (RADIUS, RADIUS).into(),
                     start_angle: Angle::radians(0.0),
-                    sweep_angle: Angle::two_pi() * (timer / SPAWNER_TIMER_SEC) as f32,
+                    sweep_angle: Angle::two_pi() * (timer / item.spawning_time) as f32,
                     x_rotation: Angle::radians(0.0),
                 };
 
@@ -41,7 +41,7 @@ impl Building {
             } => {
                 const SIZE: f32 = CELL_SIZE / 3.0;
                 draw.rect().color(soften(item.color)).w(SIZE).h(SIZE);
-                draw_loading_square_frame(draw, item.color, (timer / SPAWNER_TIMER_SEC) as f32, SIZE, 2.0 * SIZE_UNIT);
+                draw_loading_square_frame(draw, item.color, (timer / item.crafting_time) as f32, SIZE, 2.0 * SIZE_UNIT);
             }
             Building::Submitter { contents } => todo!(),
         }

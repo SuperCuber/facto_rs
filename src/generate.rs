@@ -9,10 +9,14 @@ pub fn generate() -> (Grid, Vec<Item>) {
     let item = Item {
         color: Srgb::new(1.0, 0.0, 0.0),
         components: vec![],
+        spawning_time: 7.0,
+        crafting_time: 3.0,
     };
     let item2 = Item {
         color: Srgb::new(0.0, 1.0, 0.0),
         components: vec![],
+        spawning_time: 7.0,
+        crafting_time: 3.0,
     };
 
     for x in 0..3 {

@@ -64,6 +64,8 @@ pub enum Building {
 pub struct Item {
     pub color: Srgb,
     pub components: Vec<Item>,
+    pub spawning_time: f64,
+    pub crafting_time: f64,
 }
 
 #[derive(Clone, Debug)]

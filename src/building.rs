@@ -9,7 +9,7 @@ impl Building {
                 item,
                 ref mut timer,
             } => {
-                if *timer > SPAWNER_TIMER_SEC + 0.5 {
+                if *timer > item.spawning_time + 0.5 {
                     *timer = 0.0;
                 } else {
                     *timer += update.since_last.secs();
@@ -20,7 +20,7 @@ impl Building {
                 contents,
                 ref mut timer,
             } => {
-                if *timer > SPAWNER_TIMER_SEC + 0.5 {
+                if *timer > item.crafting_time + 0.5 {
                     *timer = 0.0;
                 } else {
                     *timer += update.since_last.secs();
