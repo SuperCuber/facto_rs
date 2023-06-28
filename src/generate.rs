@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use nannou::prelude::*;
+use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
 use crate::{constants::*, model::*};
 
@@ -21,29 +21,46 @@ pub fn generate() -> (Grid, Vec<Item>) {
 
     for x in 0..3 {
         for y in 0..3 {
-            if (x + y) % 2 == 0 {
-                grid_items.insert(
-                    Position(x, y),
-                    GridItem::Building(
-                        Building::Spawner {
-                            item: item.clone(),
-                            timer: 0.0,
-                        },
-                        Direction::South,
-                    ),
-                );
-            } else {
-                grid_items.insert(
-                    Position(x, y),
-                    GridItem::Building(
-                        Building::Crafter {
-                            item: item2.clone(),
-                            contents: vec![],
-                            timer: 0.0,
-                        },
-                        Direction::East,
-                    ),
-                );
+            match (x + y) % 3 {
+                0 => {
+                    grid_items.insert(
+                        Position(x, y),
+                        GridItem::Building(
+                            Building::Spawner {
+                                item: item.clone(),
+                                timer: 0.0,
+                            },
+                            Direction::South,
+                        ),
+                    );
+                }
+                1 => {
+                    grid_items.insert(
+                        Position(x, y),
+                        GridItem::Building(
+                            Building::Crafter {
+                                item: item2.clone(),
+                                contents: vec![],
+                                timer: 0.0,
+                            },
+                            Direction::East,
+                        ),
+                    );
+                }
+                2 => {
+                    grid_items.insert(
+                        Position(x, y),
+                        GridItem::Rail(
+                            if x % 2 == 0 {
+                                Orientation::Horizontal
+                            } else {
+                                Orientation::Vertical
+                            },
+                            RailSize::Small,
+                        ),
+                    );
+                }
+                _ => unreachable!(),
             }
         }
     }

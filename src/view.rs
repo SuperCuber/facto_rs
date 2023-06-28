@@ -74,7 +74,24 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     }
 }
 
-fn draw_rail(draw: &Draw, orientation: &Orientation, size: &RailSize) {}
+fn draw_rail(draw: &Draw, orientation: &Orientation, size: &RailSize) {
+    let grid_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
+    let draw_rotated = match orientation {
+        Orientation::Horizontal => draw.clone(),
+        Orientation::Vertical => draw.rotate(PI/2.0),
+    };
+    // Rails
+    draw_rotated
+        .y(CELL_SIZE / 18.0)
+        .line()
+        .points(grid_frame.mid_left(), grid_frame.mid_right())
+        .color(BLACK);
+    draw_rotated
+        .y(-CELL_SIZE / 18.0)
+        .line()
+        .points(grid_frame.mid_left(), grid_frame.mid_right())
+        .color(BLACK);
+}
 
 // === Utils ===
 

@@ -91,7 +91,7 @@ impl GridItem {
     pub fn update(&mut self, update: &Update) {
         match self {
             GridItem::Building(b, _) => b.update(update),
-            GridItem::Rail(_, _) => todo!(),
+            GridItem::Rail(_, _) => {}
             GridItem::Intersection(_, _) => todo!(),
         }
     }
