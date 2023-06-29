@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::BTreeMap};
+use std::cell::RefCell;
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
@@ -18,69 +18,60 @@ pub fn generate() -> (Grid, Vec<Item>) {
         crafting_time: 3.0,
     };
 
-    let mut grid_items = BTreeMap::new();
+    let mut grid_items = GridItems::new();
 
     // Main rail
     for x in 0..5 {
-        grid_items.insert(
-            Position(x, 2),
-            RefCell::new(GridItem::Rail(Orientation::Horizontal)),
-        );
+        grid_items.insert(Position(x, 2), GridItem::Rail(Orientation::Horizontal));
     }
 
     // Buildings
     grid_items.insert(
         Position(1, 0),
-        RefCell::new(GridItem::Building(
+        GridItem::Building(
             Building::Spawner {
                 item: item.clone(),
-                timer: 0.0,
+                timer: RefCell::new(0.0),
             },
             Direction::North,
-        )),
+        ),
     );
     grid_items.insert(
         Position(3, 4),
-        RefCell::new(GridItem::Building(
+        GridItem::Building(
             Building::Crafter {
                 item: item2.clone(),
-                contents: vec![],
-                timer: 0.0,
+                contents: RefCell::new(vec![]),
+                timer: RefCell::new(0.0),
             },
             Direction::South,
-        )),
+        ),
     );
 
     // Connect
-    grid_items.insert(
-        Position(1, 1),
-        RefCell::new(GridItem::Rail(Orientation::Vertical)),
-    );
-    grid_items.insert(
-        Position(3, 3),
-        RefCell::new(GridItem::Rail(Orientation::Vertical)),
-    );
+    grid_items.insert(Position(1, 1), GridItem::Rail(Orientation::Vertical));
+    grid_items.insert(Position(3, 3), GridItem::Rail(Orientation::Vertical));
 
     // Intersection
     grid_items.insert(
         Position(1, 2),
-        RefCell::new(GridItem::Intersection(
-            Intersection {
+        GridItem::Intersection(
+            RefCell::new(Intersection {
                 item: None,
                 cooldown: 0.0,
-            },
+            }),
             IntersectionType::Quad,
-        )),
+        ),
     );
     grid_items.insert(
         Position(3, 2),
-        RefCell::new(GridItem::Intersection(
-            Intersection {
+        GridItem::Intersection(
+            RefCell::new(Intersection {
                 item: None,
                 cooldown: 0.0,
-            },
+            }),
             IntersectionType::Triple(Direction::North),
-        )),
+        ),
     );
 
     let grid = Grid {

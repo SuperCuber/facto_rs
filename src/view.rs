@@ -19,7 +19,7 @@ impl GridItem {
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, direction),
             GridItem::Rail(orientation) => draw_rail(draw, orientation, false),
-            GridItem::Intersection(i, i_type) => draw_intersection(draw, i, i_type),
+            GridItem::Intersection(i, i_type) => draw_intersection(draw, &i.borrow(), i_type),
         }
     }
 }
@@ -35,6 +35,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
 
     match b {
         Building::Spawner { item, timer } => {
+            let timer = timer.borrow();
             draw_rotated
                 .ellipse()
                 .x(offset)
@@ -64,6 +65,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
             contents: _,
             timer,
         } => {
+            let timer = timer.borrow();
             draw_rotated
                 .x(offset)
                 .rect()

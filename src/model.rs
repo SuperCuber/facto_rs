@@ -15,9 +15,11 @@ pub struct Model {
 
 #[derive(Debug, Clone, Default)]
 pub struct Grid {
-    pub grid_items: BTreeMap<Position, RefCell<GridItem>>,
+    pub grid_items: GridItems,
     pub trains: Vec<Train>,
 }
+
+pub type GridItems = BTreeMap<Position, GridItem>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Position(pub usize, pub usize);
@@ -26,7 +28,7 @@ pub struct Position(pub usize, pub usize);
 pub enum GridItem {
     Building(Building, Direction),
     Rail(Orientation),
-    Intersection(Intersection, IntersectionType),
+    Intersection(RefCell<Intersection>, IntersectionType),
 }
 
 #[derive(Debug, Clone)]
@@ -53,15 +55,15 @@ pub enum Direction {
 pub enum Building {
     Spawner {
         item: Item,
-        timer: f64,
+        timer: RefCell<f64>,
     },
     Crafter {
         item: Item,
-        contents: Vec<Item>,
-        timer: f64,
+        contents: RefCell<Vec<Item>>,
+        timer: RefCell<f64>,
     },
     Submitter {
-        contents: Vec<Item>,
+        contents: RefCell<Vec<Item>>,
     },
 }
 
@@ -78,15 +80,23 @@ pub struct Item {
 pub struct Train {
     pub item: Item,
     pub position: Position,
+    pub sub_position: Vec2,
+    pub target: Position,
 }
 
 // === Utils ===
 impl GridItem {
-    pub fn update(&mut self, update: &Update, grid_items: &BTreeMap<Position, RefCell<GridItem>>) {
+    pub fn update(
+        &self,
+        position: &Position,
+        update: &Update,
+        grid_items: &GridItems,
+        trains: &mut Vec<Train>,
+    ) {
         match self {
-            GridItem::Building(b, _) => b.update(update, grid_items),
+            GridItem::Building(b, _) => b.update(position, update, grid_items, trains),
             GridItem::Rail(..) => {}
-            GridItem::Intersection(i, _) => i.update(update),
+            GridItem::Intersection(i, _) => i.borrow_mut().update(update),
         }
     }
 }

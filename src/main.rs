@@ -33,10 +33,9 @@ fn model(app: &App) -> Model {
 }
 
 fn update(_app: &App, model: &mut Model, update: Update) {
-    for grid_item in model.grid.grid_items.values() {
+    for (pos, grid_item) in &model.grid.grid_items {
         grid_item
-            .borrow_mut()
-            .update(&update, &model.grid.grid_items);
+            .update(pos, &update, &model.grid.grid_items, &mut model.grid.trains);
     }
 }
 
@@ -51,7 +50,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     for (pos, grid_item) in &model.grid.grid_items {
         let pos = *pos;
-        grid_item.borrow().draw(&draw.xy(pos.into()));
+        grid_item.draw(&draw.xy(pos.into()));
     }
 
     draw.to_frame(app, &frame).unwrap();

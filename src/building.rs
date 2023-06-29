@@ -1,18 +1,31 @@
-use std::{cell::RefCell, collections::BTreeMap};
-
 use nannou::prelude::*;
 
 use crate::model::*;
 
 impl Building {
-    pub fn update(&mut self, update: &Update, grid_items: &BTreeMap<Position, RefCell<GridItem>>) {
+    pub fn update(
+        &self,
+        position: &Position,
+        update: &Update,
+        grid_items: &GridItems,
+        trains: &mut Vec<Train>,
+    ) {
         match self {
             Building::Spawner {
                 item,
-                ref mut timer,
+                timer,
             } => {
+                let mut timer = timer.borrow_mut();
                 if *timer > item.spawning_time {
-                    *timer = 0.0;
+                    if let Some(target) = find_train_target(grid_items) {
+                        *timer = 0.0;
+                        trains.push(Train {
+                            item: item.clone(),
+                            position: *position,
+                            sub_position: Vec2::ZERO,
+                            target,
+                        });
+                    }
                 } else {
                     *timer += update.since_last.secs();
                 }
@@ -20,8 +33,9 @@ impl Building {
             Building::Crafter {
                 item,
                 contents: _,
-                ref mut timer,
+                timer,
             } => {
+                let mut timer = timer.borrow_mut();
                 if *timer > item.crafting_time {
                     *timer = 0.0;
                 } else {
@@ -31,4 +45,8 @@ impl Building {
             Building::Submitter { .. } => todo!(),
         }
     }
+}
+
+fn find_train_target(_grid_items: &GridItems) -> Option<Position> {
+    todo!()
 }
