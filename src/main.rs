@@ -36,7 +36,7 @@ fn model(app: &App) -> Model {
 fn update(_app: &App, model: &mut Model, update: Update) {
     for _ in 0..model.grid.trains.len() {
         let mut train = model.grid.trains.pop_front().unwrap();
-        if train.update(&update, &model.grid.grid_items, &mut model.grid.trains) {
+        if train.update(&update, &mut model.grid.grid_items, &mut model.grid.trains) {
             model.grid.trains.push_back(train);
         }
     }

@@ -1,4 +1,8 @@
-use std::{cell::RefCell, collections::{BTreeMap, VecDeque}};
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, VecDeque},
+    ops::DerefMut,
+};
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
@@ -119,6 +123,18 @@ impl GridItem {
             GridItem::Intersection(i, _) => i.borrow_mut().update(update),
         }
     }
+
+    pub fn contents(&mut self) -> Option<impl DerefMut<Target = BTreeMap<Item, usize>> + '_> {
+        if let GridItem::Building(
+            Building::Crafter { contents, .. } | Building::Submitter { contents, .. },
+            ..,
+        ) = self
+        {
+            Some(contents.borrow_mut())
+        } else {
+            None
+        }
+    }
 }
 
 impl From<Position> for Vec2 {
@@ -145,7 +161,12 @@ impl IntersectionType {
 }
 
 impl Building {
-    pub fn requires(&self, target_item: &Item, self_position: &Position, trains: &VecDeque<Train>) -> bool {
+    pub fn requires(
+        &self,
+        target_item: &Item,
+        self_position: &Position,
+        trains: &VecDeque<Train>,
+    ) -> bool {
         match self {
             Building::Spawner { .. } => false,
             Building::Crafter { item, contents, .. } | Building::Submitter { item, contents } => {

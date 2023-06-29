@@ -9,8 +9,8 @@ pub fn generate() -> (Grid, Vec<Item>) {
         id: 0,
         color: Srgb::new(1.0, 0.0, 0.0),
         components: BTreeMap::new(),
-        spawning_time: 7.0,
-        crafting_time: 3.0,
+        spawning_time: 3.0,
+        crafting_time: 7.0,
     };
     let mut item2_components = BTreeMap::new();
     item2_components.insert(item.clone(), 1);
@@ -18,8 +18,8 @@ pub fn generate() -> (Grid, Vec<Item>) {
         id: 1,
         color: Srgb::new(0.0, 1.0, 0.0),
         components: item2_components,
-        spawning_time: 7.0,
-        crafting_time: 3.0,
+        spawning_time: 3.0,
+        crafting_time: 7.0,
     };
 
     let mut grid_items = GridItems::new();
