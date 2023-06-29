@@ -34,8 +34,7 @@ fn model(app: &App) -> Model {
 
 fn update(_app: &App, model: &mut Model, update: Update) {
     for (pos, grid_item) in &model.grid.grid_items {
-        grid_item
-            .update(pos, &update, &model.grid.grid_items, &mut model.grid.trains);
+        grid_item.update(pos, &update, &model.grid.grid_items, &mut model.grid.trains);
     }
 }
 

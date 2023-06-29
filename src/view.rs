@@ -79,7 +79,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
                 2.0 * SIZE_UNIT,
             );
         }
-        Building::Submitter { contents: _ } => todo!(),
+        Building::Submitter { .. } => todo!(),
     }
 }
 

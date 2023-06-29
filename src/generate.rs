@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::BTreeMap};
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
@@ -6,14 +6,18 @@ use crate::model::*;
 
 pub fn generate() -> (Grid, Vec<Item>) {
     let item = Item {
+        id: 0,
         color: Srgb::new(1.0, 0.0, 0.0),
-        components: vec![],
+        components: BTreeMap::new(),
         spawning_time: 7.0,
         crafting_time: 3.0,
     };
+    let mut item2_components = BTreeMap::new();
+    item2_components.insert(item.clone(), 1);
     let item2 = Item {
+        id: 1,
         color: Srgb::new(0.0, 1.0, 0.0),
-        components: vec![],
+        components: item2_components,
         spawning_time: 7.0,
         crafting_time: 3.0,
     };
@@ -41,7 +45,7 @@ pub fn generate() -> (Grid, Vec<Item>) {
         GridItem::Building(
             Building::Crafter {
                 item: item2.clone(),
-                contents: RefCell::new(vec![]),
+                contents: RefCell::new(BTreeMap::new()),
                 timer: RefCell::new(0.0),
             },
             Direction::South,

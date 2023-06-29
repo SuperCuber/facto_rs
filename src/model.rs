@@ -59,19 +59,21 @@ pub enum Building {
     },
     Crafter {
         item: Item,
-        contents: RefCell<Vec<Item>>,
+        contents: RefCell<BTreeMap<Item, usize>>,
         timer: RefCell<f64>,
     },
     Submitter {
-        contents: RefCell<Vec<Item>>,
+        item: Item,
+        contents: RefCell<BTreeMap<Item, usize>>,
     },
 }
 
 // === Item ===
 #[derive(Clone, Debug)]
 pub struct Item {
+    pub id: usize,
     pub color: Srgb,
-    pub components: Vec<Item>,
+    pub components: BTreeMap<Item, usize>,
     pub spawning_time: f64,
     pub crafting_time: f64,
 }
@@ -85,6 +87,24 @@ pub struct Train {
 }
 
 // === Utils ===
+
+impl PartialEq for Item {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for Item {}
+impl PartialOrd for Item {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.id.partial_cmp(&other.id)
+    }
+}
+impl Ord for Item {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.id.cmp(&other.id)
+    }
+}
+
 impl GridItem {
     pub fn update(
         &self,
@@ -121,5 +141,28 @@ impl From<&Direction> for f32 {
 impl IntersectionType {
     pub fn is_triple(&self) -> bool {
         matches!(self, IntersectionType::Triple(..))
+    }
+}
+
+impl Building {
+    pub fn requires(&self, target_item: &Item, self_position: &Position, trains: &[Train]) -> bool {
+        match self {
+            Building::Spawner { .. } => false,
+            Building::Crafter { item, contents, .. } | Building::Submitter { item, contents } => {
+                let desired_count = item
+                    .components
+                    .iter()
+                    .filter(|x| x.0 == target_item)
+                    .count();
+                let existing_count = contents
+                    .borrow()
+                    .iter()
+                    .filter(|x| x.0 == target_item)
+                    .count();
+                let incoming_trains = trains.iter().filter(|t| t.target == *self_position).count();
+
+                existing_count + incoming_trains < desired_count
+            }
+        }
     }
 }
