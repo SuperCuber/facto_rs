@@ -1,4 +1,4 @@
-use std::{ops::Deref, collections::VecDeque};
+use std::{collections::VecDeque, ops::Deref};
 
 use nannou::prelude::*;
 
@@ -56,11 +56,41 @@ impl Building {
             Building::Submitter { .. } => todo!(),
         }
     }
+
+    pub fn requires(
+        &self,
+        target_item: &Item,
+        self_position: &Position,
+        trains: &VecDeque<Train>,
+    ) -> bool {
+        match self {
+            Building::Spawner { .. } => false,
+            Building::Crafter { item, contents, .. } | Building::Submitter { item, contents } => {
+                let desired_count = item
+                    .components
+                    .get(target_item)
+                    .copied()
+                    .unwrap_or_default();
+                let existing_count = contents
+                    .borrow()
+                    .get(target_item)
+                    .copied()
+                    .unwrap_or_default();
+                let incoming_trains = trains.iter().filter(|t| t.target == *self_position).count();
+
+                existing_count + incoming_trains < desired_count
+            }
+        }
+    }
 }
 
 // === Utils ===
 
-fn find_train_target(item: &Item, grid_items: &GridItems, trains: &VecDeque<Train>) -> Option<Position> {
+fn find_train_target(
+    item: &Item,
+    grid_items: &GridItems,
+    trains: &VecDeque<Train>,
+) -> Option<Position> {
     for (pos, grid_item) in grid_items {
         if let GridItem::Building(b, _) = grid_item {
             if b.requires(item, pos, trains) {

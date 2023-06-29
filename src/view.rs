@@ -26,24 +26,24 @@ impl GridItem {
 
 pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     let draw_rotated = draw.rotate(direction.into());
-    let offset = -(CELL_SIZE - BUILDING_SIZE) / 4.0;
-    let center = Vec2::new(offset, 1.0).rotate(direction.into());
 
-    let building_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
-
+    let building_frame = {
+        let offset = -(CELL_SIZE - BUILDING_SIZE) / 4.0;
+        let center = Vec2::new(offset, 1.0).rotate(direction.into());
+        Rect::from_xy_wh(center, (BUILDING_SIZE, BUILDING_SIZE).into())
+    };
     draw_rail(&draw_rotated, &Orientation::Horizontal, true);
 
     match b {
         Building::Spawner { item, timer } => {
             let timer = timer.borrow();
-            draw_rotated
-                .ellipse()
-                .x(offset)
+            draw.ellipse()
                 .color(soften(item.color))
+                .xy(building_frame.xy())
                 .wh(building_frame.wh());
 
             let arc = Arc {
-                center: (center.x, center.y).into(),
+                center: (building_frame.x(), building_frame.y()).into(),
                 radii: (BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0).into(),
                 start_angle: Angle::radians(0.0),
                 sweep_angle: Angle::two_pi()
@@ -62,22 +62,44 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
 
         Building::Crafter {
             item,
-            contents: _,
+            contents,
             timer,
         } => {
             let timer = timer.borrow();
-            draw_rotated
-                .x(offset)
-                .rect()
+            draw.rect()
+                .xy(building_frame.xy())
                 .color(soften(item.color))
                 .wh(building_frame.wh());
             draw_loading_square_frame(
-                &draw.xy(center),
+                &draw.xy(building_frame.xy()),
                 item.color,
                 animation_completion(*timer, item.crafting_time, 0.5),
                 BUILDING_SIZE,
                 2.0 * SIZE_UNIT,
             );
+
+            let items_frame = building_frame.pad(5.0 * SIZE_UNIT);
+            let mut position = (0, 0);
+            let item_frame = Rect::from_wh(items_frame.wh() / INVENTORY_ITEM_SQUARE_SIDE as f32)
+                .top_left_of(items_frame);
+            for (item, &count) in contents.borrow().iter() {
+                for _ in 0..count {
+                    let position_px = Vec2::new(position.0 as f32, position.1 as f32);
+                    let item_frame = item_frame.shift(item_frame.wh() * position_px);
+                    draw.rect()
+                        .xy(item_frame.xy())
+                        .wh(item_frame.pad(2.0 * SIZE_UNIT).wh())
+                        .stroke(item.color)
+                        .stroke_weight(1.0 * SIZE_UNIT)
+                        .color(soften(item.color));
+
+                    position.0 += 1;
+                    if position.0 >= INVENTORY_ITEM_SQUARE_SIDE {
+                        position.1 -= 1;
+                        position.0 = 0;
+                    }
+                }
+            }
         }
         Building::Submitter { .. } => todo!(),
     }

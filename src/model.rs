@@ -159,31 +159,3 @@ impl IntersectionType {
         matches!(self, IntersectionType::Triple(..))
     }
 }
-
-impl Building {
-    pub fn requires(
-        &self,
-        target_item: &Item,
-        self_position: &Position,
-        trains: &VecDeque<Train>,
-    ) -> bool {
-        match self {
-            Building::Spawner { .. } => false,
-            Building::Crafter { item, contents, .. } | Building::Submitter { item, contents } => {
-                let desired_count = item
-                    .components
-                    .iter()
-                    .filter(|x| x.0 == target_item)
-                    .count();
-                let existing_count = contents
-                    .borrow()
-                    .iter()
-                    .filter(|x| x.0 == target_item)
-                    .count();
-                let incoming_trains = trains.iter().filter(|t| t.target == *self_position).count();
-
-                existing_count + incoming_trains < desired_count
-            }
-        }
-    }
-}

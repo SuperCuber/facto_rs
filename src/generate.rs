@@ -1,4 +1,7 @@
-use std::{cell::RefCell, collections::{BTreeMap, VecDeque}};
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, VecDeque},
+};
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
@@ -13,7 +16,7 @@ pub fn generate() -> (Grid, Vec<Item>) {
         crafting_time: 7.0,
     };
     let mut item2_components = BTreeMap::new();
-    item2_components.insert(item.clone(), 1);
+    item2_components.insert(item.clone(), 4);
     let item2 = Item {
         id: 1,
         color: Srgb::new(0.0, 1.0, 0.0),
