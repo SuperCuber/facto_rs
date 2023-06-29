@@ -1,15 +1,17 @@
+use std::{cell::RefCell, collections::BTreeMap};
+
 use nannou::prelude::*;
 
-use crate::{constants::*, model::*};
+use crate::model::*;
 
 impl Building {
-    pub fn update(&mut self, update: &Update) {
+    pub fn update(&mut self, update: &Update, grid_items: &BTreeMap<Position, RefCell<GridItem>>) {
         match self {
             Building::Spawner {
                 item,
                 ref mut timer,
             } => {
-                if *timer > item.spawning_time + 0.5 {
+                if *timer > item.spawning_time {
                     *timer = 0.0;
                 } else {
                     *timer += update.since_last.secs();
@@ -17,10 +19,10 @@ impl Building {
             }
             Building::Crafter {
                 item,
-                contents,
+                contents: _,
                 ref mut timer,
             } => {
-                if *timer > item.crafting_time + 0.5 {
+                if *timer > item.crafting_time {
                     *timer = 0.0;
                 } else {
                     *timer += update.since_last.secs();

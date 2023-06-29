@@ -1,8 +1,8 @@
-use std::collections::BTreeMap;
+use std::{cell::RefCell, collections::BTreeMap};
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
-use crate::{constants::*, model::*};
+use crate::model::*;
 
 pub fn generate() -> (Grid, Vec<Item>) {
     let item = Item {
@@ -24,63 +24,63 @@ pub fn generate() -> (Grid, Vec<Item>) {
     for x in 0..5 {
         grid_items.insert(
             Position(x, 2),
-            GridItem::Rail(Orientation::Horizontal),
+            RefCell::new(GridItem::Rail(Orientation::Horizontal)),
         );
     }
 
     // Buildings
     grid_items.insert(
         Position(1, 0),
-        GridItem::Building(
+        RefCell::new(GridItem::Building(
             Building::Spawner {
                 item: item.clone(),
                 timer: 0.0,
             },
             Direction::North,
-        ),
+        )),
     );
     grid_items.insert(
         Position(3, 4),
-        GridItem::Building(
+        RefCell::new(GridItem::Building(
             Building::Crafter {
                 item: item2.clone(),
                 contents: vec![],
                 timer: 0.0,
             },
             Direction::South,
-        ),
+        )),
     );
 
     // Connect
     grid_items.insert(
         Position(1, 1),
-        GridItem::Rail(Orientation::Vertical),
+        RefCell::new(GridItem::Rail(Orientation::Vertical)),
     );
     grid_items.insert(
         Position(3, 3),
-        GridItem::Rail(Orientation::Vertical),
+        RefCell::new(GridItem::Rail(Orientation::Vertical)),
     );
 
     // Intersection
     grid_items.insert(
         Position(1, 2),
-        GridItem::Intersection(
+        RefCell::new(GridItem::Intersection(
             Intersection {
                 item: None,
                 cooldown: 0.0,
             },
             IntersectionType::Quad,
-        ),
+        )),
     );
     grid_items.insert(
         Position(3, 2),
-        GridItem::Intersection(
+        RefCell::new(GridItem::Intersection(
             Intersection {
                 item: None,
                 cooldown: 0.0,
             },
             IntersectionType::Triple(Direction::North),
-        ),
+        )),
     );
 
     let grid = Grid {

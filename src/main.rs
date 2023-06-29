@@ -1,6 +1,4 @@
-#![allow(dead_code, unused_variables, unused_imports)]
-
-use std::collections::BTreeMap;
+#![allow(dead_code)]
 
 use constants::CELL_SIZE;
 use nannou::prelude::*;
@@ -19,7 +17,13 @@ fn main() {
 }
 
 fn model(app: &App) -> Model {
-    let window = app.new_window().maximized(true).view(view).event(event).build().unwrap();
+    let window = app
+        .new_window()
+        .maximized(true)
+        .view(view)
+        .event(event)
+        .build()
+        .unwrap();
     let (grid, items) = generate::generate();
     Model {
         window,
@@ -28,13 +32,15 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn update(app: &App, model: &mut Model, update: Update) {
-    for (pos, grid_item) in &mut model.grid.grid_items {
-        grid_item.update(&update);
+fn update(_app: &App, model: &mut Model, update: Update) {
+    for grid_item in model.grid.grid_items.values() {
+        grid_item
+            .borrow_mut()
+            .update(&update, &model.grid.grid_items);
     }
 }
 
-fn event(app: &App, model: &mut Model, event: WindowEvent) {}
+fn event(_app: &App, _model: &mut Model, _event: WindowEvent) {}
 
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
@@ -45,7 +51,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     for (pos, grid_item) in &model.grid.grid_items {
         let pos = *pos;
-        grid_item.draw(&draw.xy(pos.into()));
+        grid_item.borrow().draw(&draw.xy(pos.into()));
     }
 
     draw.to_frame(app, &frame).unwrap();

@@ -1,9 +1,9 @@
 use nannou::prelude::*;
 
-use crate::{constants::*, model::*};
+use crate::model::*;
 
 impl Intersection {
-    pub fn update(&mut self, update: &Update) {
+    pub fn update(&mut self, _update: &Update) {
         // TODO
     }
 }

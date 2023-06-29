@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{cell::RefCell, collections::BTreeMap};
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
@@ -15,7 +15,7 @@ pub struct Model {
 
 #[derive(Debug, Clone, Default)]
 pub struct Grid {
-    pub grid_items: BTreeMap<Position, GridItem>,
+    pub grid_items: BTreeMap<Position, RefCell<GridItem>>,
     pub trains: Vec<Train>,
 }
 
@@ -82,9 +82,9 @@ pub struct Train {
 
 // === Utils ===
 impl GridItem {
-    pub fn update(&mut self, update: &Update) {
+    pub fn update(&mut self, update: &Update, grid_items: &BTreeMap<Position, RefCell<GridItem>>) {
         match self {
-            GridItem::Building(b, _) => b.update(update),
+            GridItem::Building(b, _) => b.update(update, grid_items),
             GridItem::Rail(..) => {}
             GridItem::Intersection(i, _) => i.update(update),
         }

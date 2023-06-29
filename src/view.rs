@@ -1,5 +1,8 @@
 use nannou::{
-    lyon::{geom::{Angle, Arc}, lyon_tessellation::Orientation},
+    lyon::{
+        geom::{Angle, Arc},
+        lyon_tessellation::Orientation,
+    },
     prelude::*,
 };
 
@@ -7,7 +10,6 @@ use crate::{constants::*, model::*};
 
 impl GridItem {
     pub fn draw(&self, draw: &Draw) {
-
         // draw.rect()
         //     .no_fill()
         //     .w_h(CELL_SIZE, CELL_SIZE)
@@ -28,7 +30,6 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     let center = Vec2::new(offset, 1.0).rotate(direction.into());
 
     let building_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
-    let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
 
     draw_rail(&draw_rotated, &Orientation::Horizontal, true);
 
@@ -44,7 +45,10 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
                 center: (center.x, center.y).into(),
                 radii: (BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0).into(),
                 start_angle: Angle::radians(0.0),
-                sweep_angle: Angle::two_pi() * (timer / item.spawning_time) as f32,
+                sweep_angle: Angle::two_pi()
+                    * animation_completion(*timer, item.spawning_time, 0.5)
+                    // For some reason rendering is slightly off, this fixes
+                    * 1.05,
                 x_rotation: Angle::radians(0.0),
             };
 
@@ -57,7 +61,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
 
         Building::Crafter {
             item,
-            contents,
+            contents: _,
             timer,
         } => {
             draw_rotated
@@ -68,12 +72,12 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
             draw_loading_square_frame(
                 &draw.xy(center),
                 item.color,
-                (timer / item.crafting_time) as f32,
+                animation_completion(*timer, item.crafting_time, 0.5),
                 BUILDING_SIZE,
                 2.0 * SIZE_UNIT,
             );
         }
-        Building::Submitter { contents } => todo!(),
+        Building::Submitter { contents: _ } => todo!(),
     }
 }
 
@@ -104,7 +108,7 @@ fn draw_rail(draw: &Draw, orientation: &Orientation, half: bool) {
 
 fn draw_intersection(
     draw: &Draw,
-    intersection: &Intersection,
+    _intersection: &Intersection,
     intersection_type: &IntersectionType,
 ) {
     let draw_rotated = draw.rotate(if let IntersectionType::Triple(dir) = intersection_type {
@@ -112,8 +116,6 @@ fn draw_intersection(
     } else {
         0.0
     });
-    let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
-    let intersection_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
     let is_triple = intersection_type.is_triple();
 
     draw_rail(&draw_rotated, &Orientation::Vertical, false);
@@ -145,6 +147,17 @@ fn soften(color: Srgb) -> Srgb {
     let mut color: Hsv = color.into();
     color.saturation *= C;
     color.into()
+}
+
+fn animation_completion(elapsed: f64, length: f64, end_lag: f64) -> f32 {
+    let end = length - end_lag;
+    debug_assert!(end > 0.0);
+
+    if elapsed < end {
+        (elapsed / end) as f32
+    } else {
+        1.0
+    }
 }
 
 fn draw_loading_square_frame(draw: &Draw, color: Srgb, completion: f32, wh: f32, weight: f32) {
