@@ -107,3 +107,9 @@ impl From<&Direction> for f32 {
         }
     }
 }
+
+impl IntersectionType {
+    pub fn is_triple(&self) -> bool {
+        matches!(self, IntersectionType::Triple(..))
+    }
+}

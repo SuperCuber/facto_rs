@@ -1,5 +1,5 @@
 use nannou::{
-    lyon::{geom::Angle, lyon_tessellation::Orientation},
+    lyon::{geom::{Angle, Arc}, lyon_tessellation::Orientation},
     prelude::*,
 };
 
@@ -7,7 +7,13 @@ use crate::{constants::*, model::*};
 
 impl GridItem {
     pub fn draw(&self, draw: &Draw) {
-        // draw.rect().no_fill().w_h(CELL_SIZE, CELL_SIZE).stroke_color(RED).stroke_weight(1.0);
+
+        // draw.rect()
+        //     .no_fill()
+        //     .w_h(CELL_SIZE, CELL_SIZE)
+        //     .stroke_color(RED)
+        //     .stroke_weight(1.0);
+
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, direction),
             GridItem::Rail(orientation) => draw_rail(draw, orientation, false),
@@ -18,6 +24,9 @@ impl GridItem {
 
 pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     let draw_rotated = draw.rotate(direction.into());
+    let offset = -(CELL_SIZE - BUILDING_SIZE) / 4.0;
+    let center = Vec2::new(offset, 1.0).rotate(direction.into());
+
     let building_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
 
@@ -27,11 +36,12 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
         Building::Spawner { item, timer } => {
             draw_rotated
                 .ellipse()
+                .x(offset)
                 .color(soften(item.color))
                 .wh(building_frame.wh());
 
-            let arc = nannou::lyon::geom::arc::Arc {
-                center: (0.0, 0.0).into(),
+            let arc = Arc {
+                center: (center.x, center.y).into(),
                 radii: (BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0).into(),
                 start_angle: Angle::radians(0.0),
                 sweep_angle: Angle::two_pi() * (timer / item.spawning_time) as f32,
@@ -51,11 +61,12 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
             timer,
         } => {
             draw_rotated
+                .x(offset)
                 .rect()
                 .color(soften(item.color))
                 .wh(building_frame.wh());
             draw_loading_square_frame(
-                draw,
+                &draw.xy(center),
                 item.color,
                 (timer / item.crafting_time) as f32,
                 BUILDING_SIZE,
@@ -103,19 +114,28 @@ fn draw_intersection(
     });
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
     let intersection_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
+    let is_triple = intersection_type.is_triple();
 
     draw_rail(&draw_rotated, &Orientation::Vertical, false);
-    draw_rail(&draw_rotated, &Orientation::Horizontal, true);
+    draw_rail(&draw_rotated, &Orientation::Horizontal, is_triple);
 
-    let point1 = -Vec2::X;
-    let point2 = point1.rotate(PI * 2.0 / 3.0);
-    let point3 = point2.rotate(PI * 2.0 / 3.0);
-    draw_rotated
-        .x(BUILDING_SIZE / 18.0)
-        .scale(CELL_SIZE / 3.0)
-        .tri()
-        .points(point1, point2, point3)
-        .color(WHITE);
+    if is_triple {
+        let point1 = -Vec2::X;
+        let point2 = point1.rotate(PI * 2.0 / 3.0);
+        let point3 = point2.rotate(PI * 2.0 / 3.0);
+        draw_rotated
+            .x(BUILDING_SIZE / 18.0)
+            .scale(CELL_SIZE / 3.0)
+            .tri()
+            .points(point1, point2, point3)
+            .color(WHITE);
+    } else {
+        draw_rotated
+            .rect()
+            .w_h(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
+            .rotate(PI / 4.0)
+            .color(WHITE);
+    }
 }
 
 // === Utils ===
