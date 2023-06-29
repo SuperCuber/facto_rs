@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, collections::VecDeque};
 
 use nannou::prelude::*;
 
@@ -10,7 +10,7 @@ impl Building {
         position: &Position,
         update: &Update,
         grid_items: &GridItems,
-        trains: &mut Vec<Train>,
+        trains: &mut VecDeque<Train>,
     ) {
         match self {
             Building::Spawner { item, timer } => {
@@ -18,7 +18,7 @@ impl Building {
                 if *timer > item.spawning_time {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
-                        trains.push(Train {
+                        trains.push_back(Train {
                             item: item.clone(),
                             position: *position,
                             sub_position: Vec2::ZERO,
@@ -38,7 +38,7 @@ impl Building {
                 if *timer > item.crafting_time {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
-                        trains.push(Train {
+                        trains.push_back(Train {
                             item: item.clone(),
                             position: *position,
                             sub_position: Vec2::ZERO,
@@ -60,7 +60,7 @@ impl Building {
 
 // === Utils ===
 
-fn find_train_target(item: &Item, grid_items: &GridItems, trains: &[Train]) -> Option<Position> {
+fn find_train_target(item: &Item, grid_items: &GridItems, trains: &VecDeque<Train>) -> Option<Position> {
     for (pos, grid_item) in grid_items {
         if let GridItem::Building(b, _) = grid_item {
             if b.requires(item, pos, trains) {

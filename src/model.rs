@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::BTreeMap};
+use std::{cell::RefCell, collections::{BTreeMap, VecDeque}};
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
@@ -16,7 +16,7 @@ pub struct Model {
 #[derive(Debug, Clone, Default)]
 pub struct Grid {
     pub grid_items: GridItems,
-    pub trains: Vec<Train>,
+    pub trains: VecDeque<Train>,
 }
 
 pub type GridItems = BTreeMap<Position, GridItem>;
@@ -111,7 +111,7 @@ impl GridItem {
         position: &Position,
         update: &Update,
         grid_items: &GridItems,
-        trains: &mut Vec<Train>,
+        trains: &mut VecDeque<Train>,
     ) {
         match self {
             GridItem::Building(b, _) => b.update(position, update, grid_items, trains),
@@ -145,7 +145,7 @@ impl IntersectionType {
 }
 
 impl Building {
-    pub fn requires(&self, target_item: &Item, self_position: &Position, trains: &[Train]) -> bool {
+    pub fn requires(&self, target_item: &Item, self_position: &Position, trains: &VecDeque<Train>) -> bool {
         match self {
             Building::Spawner { .. } => false,
             Building::Crafter { item, contents, .. } | Building::Submitter { item, contents } => {

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::BTreeMap};
+use std::{cell::RefCell, collections::{BTreeMap, VecDeque}};
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
 
@@ -80,7 +80,7 @@ pub fn generate() -> (Grid, Vec<Item>) {
 
     let grid = Grid {
         grid_items,
-        trains: vec![],
+        trains: VecDeque::new(),
     };
     let items = vec![item, item2];
 
