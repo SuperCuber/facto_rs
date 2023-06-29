@@ -37,8 +37,8 @@ pub enum RailSize {
 
 #[derive(Debug, Clone)]
 pub struct Intersection {
-    item: Option<Item>,
-    cooldown: f64,
+    pub item: Option<Item>,
+    pub cooldown: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -92,7 +92,7 @@ impl GridItem {
         match self {
             GridItem::Building(b, _) => b.update(update),
             GridItem::Rail(_, _) => {}
-            GridItem::Intersection(_, _) => todo!(),
+            GridItem::Intersection(i, _) => i.update(update),
         }
     }
 }

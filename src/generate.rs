@@ -19,8 +19,8 @@ pub fn generate() -> (Grid, Vec<Item>) {
         crafting_time: 3.0,
     };
 
-    for x in 0..3 {
-        for y in 0..3 {
+    for x in 0..5 {
+        for y in 0..5 {
             match (x + y) % 3 {
                 0 => {
                     grid_items.insert(
@@ -50,13 +50,12 @@ pub fn generate() -> (Grid, Vec<Item>) {
                 2 => {
                     grid_items.insert(
                         Position(x, y),
-                        GridItem::Rail(
-                            if x % 2 == 0 {
-                                Orientation::Horizontal
-                            } else {
-                                Orientation::Vertical
+                        GridItem::Intersection(
+                            Intersection {
+                                item: None,
+                                cooldown: 0.0,
                             },
-                            RailSize::Small,
+                            IntersectionType::Triple(Direction::West),
                         ),
                     );
                 }

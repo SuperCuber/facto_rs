@@ -9,29 +9,18 @@ impl GridItem {
     pub fn draw(&self, draw: &Draw) {
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, direction),
-            GridItem::Rail(orientation, size) => draw_rail(draw, orientation, size),
-            GridItem::Intersection(_, _) => todo!(),
+            GridItem::Rail(orientation, size) => draw_rail(draw, orientation, size, false),
+            GridItem::Intersection(i, i_type) => draw_intersection(draw, i, i_type),
         }
     }
 }
 
 pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     let draw_rotated = draw.rotate(direction.into());
-    const SIZE: f32 = CELL_SIZE / 3.0;
-    let building_frame = Rect::from_w_h(SIZE, SIZE);
-    let grid_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
+    let building_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
+    let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
 
-    // Rails
-    draw_rotated
-        .y(building_frame.h() / 6.0)
-        .line()
-        .points(building_frame.mid_right() * 0.8, grid_frame.mid_right())
-        .color(BLACK);
-    draw_rotated
-        .y(-building_frame.h() / 6.0)
-        .line()
-        .points(building_frame.mid_right() * 0.8, grid_frame.mid_right())
-        .color(BLACK);
+    draw_rail(draw, &Orientation::Horizontal, &RailSize::Small, true);
 
     match b {
         Building::Spawner { item, timer } => {
@@ -41,7 +30,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
 
             let arc = nannou::lyon::geom::arc::Arc {
                 center: (0.0, 0.0).into(),
-                radii: (SIZE / 2.0, SIZE / 2.0).into(),
+                radii: (BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0).into(),
                 start_angle: Angle::radians(0.0),
                 sweep_angle: Angle::two_pi() * (timer / item.spawning_time) as f32,
                 x_rotation: Angle::radians(0.0),
@@ -66,7 +55,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
                 draw,
                 item.color,
                 (timer / item.crafting_time) as f32,
-                SIZE,
+                BUILDING_SIZE,
                 2.0 * SIZE_UNIT,
             );
         }
@@ -74,23 +63,62 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     }
 }
 
-fn draw_rail(draw: &Draw, orientation: &Orientation, size: &RailSize) {
-    let grid_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
+fn draw_rail(draw: &Draw, orientation: &Orientation, size: &RailSize, half: bool) {
+    let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
     let draw_rotated = match orientation {
         Orientation::Horizontal => draw.clone(),
-        Orientation::Vertical => draw.rotate(PI/2.0),
+        Orientation::Vertical => draw.rotate(PI / 2.0),
     };
-    // Rails
+
+    let offset = match size {
+        RailSize::Big => CELL_SIZE / 6.0,
+        RailSize::Small => BUILDING_SIZE / 6.0,
+    };
+
+    let start = if half {
+        cell_frame.xy()
+    } else {
+        cell_frame.mid_left()
+    };
+
     draw_rotated
-        .y(CELL_SIZE / 18.0)
+        .y(offset)
         .line()
-        .points(grid_frame.mid_left(), grid_frame.mid_right())
+        .points(start, cell_frame.mid_right())
         .color(BLACK);
     draw_rotated
-        .y(-CELL_SIZE / 18.0)
+        .y(-offset)
         .line()
-        .points(grid_frame.mid_left(), grid_frame.mid_right())
+        .points(start, cell_frame.mid_right())
         .color(BLACK);
+}
+
+fn draw_intersection(
+    draw: &Draw,
+    intersection: &Intersection,
+    intersection_type: &IntersectionType,
+) {
+    let draw_rotated = draw.rotate(if let IntersectionType::Triple(dir) = intersection_type {
+        dir.into()
+    } else {
+        0.0
+    });
+    let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
+
+    let intersection_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
+
+    draw_rail(&draw_rotated, &Orientation::Vertical, &RailSize::Big, false);
+    draw_rail(&draw_rotated, &Orientation::Horizontal, &RailSize::Small, true);
+
+    let point1 = Vec2::X;
+    let point2 = point1.rotate(PI * 2.0 / 3.0);
+    let point3 = point2.rotate(PI * 2.0 / 3.0);
+    draw_rotated
+        .x(-BUILDING_SIZE / 18.0)
+        .scale(CELL_SIZE / 2.0)
+        .tri()
+        .points(point1, point2, point3)
+        .color(WHITE);
 }
 
 // === Utils ===

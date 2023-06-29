@@ -8,6 +8,7 @@ use nannou::prelude::*;
 mod building;
 mod constants;
 mod generate;
+mod intersection;
 mod model;
 mod view;
 
