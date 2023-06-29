@@ -7,9 +7,10 @@ use crate::{constants::*, model::*};
 
 impl GridItem {
     pub fn draw(&self, draw: &Draw) {
+        // draw.rect().no_fill().w_h(CELL_SIZE, CELL_SIZE).stroke_color(RED).stroke_weight(1.0);
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, direction),
-            GridItem::Rail(orientation, size) => draw_rail(draw, orientation, size, false),
+            GridItem::Rail(orientation) => draw_rail(draw, orientation, false),
             GridItem::Intersection(i, i_type) => draw_intersection(draw, i, i_type),
         }
     }
@@ -20,11 +21,12 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     let building_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
 
-    draw_rail(draw, &Orientation::Horizontal, &RailSize::Small, true);
+    draw_rail(&draw_rotated, &Orientation::Horizontal, true);
 
     match b {
         Building::Spawner { item, timer } => {
-            draw.ellipse()
+            draw_rotated
+                .ellipse()
                 .color(soften(item.color))
                 .wh(building_frame.wh());
 
@@ -48,7 +50,8 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
             contents,
             timer,
         } => {
-            draw.rect()
+            draw_rotated
+                .rect()
                 .color(soften(item.color))
                 .wh(building_frame.wh());
             draw_loading_square_frame(
@@ -63,16 +66,11 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
     }
 }
 
-fn draw_rail(draw: &Draw, orientation: &Orientation, size: &RailSize, half: bool) {
+fn draw_rail(draw: &Draw, orientation: &Orientation, half: bool) {
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
     let draw_rotated = match orientation {
         Orientation::Horizontal => draw.clone(),
         Orientation::Vertical => draw.rotate(PI / 2.0),
-    };
-
-    let offset = match size {
-        RailSize::Big => CELL_SIZE / 6.0,
-        RailSize::Small => BUILDING_SIZE / 6.0,
     };
 
     let start = if half {
@@ -82,12 +80,12 @@ fn draw_rail(draw: &Draw, orientation: &Orientation, size: &RailSize, half: bool
     };
 
     draw_rotated
-        .y(offset)
+        .y(BUILDING_SIZE / 6.0)
         .line()
         .points(start, cell_frame.mid_right())
         .color(BLACK);
     draw_rotated
-        .y(-offset)
+        .y(-BUILDING_SIZE / 6.0)
         .line()
         .points(start, cell_frame.mid_right())
         .color(BLACK);
@@ -104,18 +102,17 @@ fn draw_intersection(
         0.0
     });
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
-
     let intersection_frame = Rect::from_w_h(BUILDING_SIZE, BUILDING_SIZE);
 
-    draw_rail(&draw_rotated, &Orientation::Vertical, &RailSize::Big, false);
-    draw_rail(&draw_rotated, &Orientation::Horizontal, &RailSize::Small, true);
+    draw_rail(&draw_rotated, &Orientation::Vertical, false);
+    draw_rail(&draw_rotated, &Orientation::Horizontal, true);
 
-    let point1 = Vec2::X;
+    let point1 = -Vec2::X;
     let point2 = point1.rotate(PI * 2.0 / 3.0);
     let point3 = point2.rotate(PI * 2.0 / 3.0);
     draw_rotated
-        .x(-BUILDING_SIZE / 18.0)
-        .scale(CELL_SIZE / 2.0)
+        .x(BUILDING_SIZE / 18.0)
+        .scale(CELL_SIZE / 3.0)
         .tri()
         .points(point1, point2, point3)
         .color(WHITE);

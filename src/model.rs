@@ -25,14 +25,8 @@ pub struct Position(pub usize, pub usize);
 #[derive(Debug, Clone)]
 pub enum GridItem {
     Building(Building, Direction),
-    Rail(Orientation, RailSize),
+    Rail(Orientation),
     Intersection(Intersection, IntersectionType),
-}
-
-#[derive(Debug, Clone)]
-pub enum RailSize {
-    Big,
-    Small,
 }
 
 #[derive(Debug, Clone)]
@@ -91,7 +85,7 @@ impl GridItem {
     pub fn update(&mut self, update: &Update) {
         match self {
             GridItem::Building(b, _) => b.update(update),
-            GridItem::Rail(_, _) => {}
+            GridItem::Rail(..) => {}
             GridItem::Intersection(i, _) => i.update(update),
         }
     }

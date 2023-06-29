@@ -19,7 +19,7 @@ fn main() {
 }
 
 fn model(app: &App) -> Model {
-    let window = app.new_window().view(view).event(event).build().unwrap();
+    let window = app.new_window().maximized(true).view(view).event(event).build().unwrap();
     let (grid, items) = generate::generate();
     Model {
         window,
