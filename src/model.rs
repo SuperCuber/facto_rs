@@ -216,6 +216,14 @@ impl IntersectionType {
     pub fn is_triple(&self) -> bool {
         matches!(self, IntersectionType::Triple(..))
     }
+
+    pub fn rotation(&self) -> f32 {
+        if let IntersectionType::Triple(dir) = self {
+            (*dir).into()
+        } else {
+            0.0
+        }
+    }
 }
 
 impl Position {
@@ -225,7 +233,7 @@ impl Position {
             (Position(x1, _), Position(x2, _)) if x1 == x2 + 1 => Some(Direction::West),
             (Position(_, y1), Position(_, y2)) if y1 + 1 == y2 => Some(Direction::North),
             (Position(_, y1), Position(_, y2)) if y1 == y2 + 1 => Some(Direction::South),
-            _ => None
+            _ => None,
         }
     }
 }

@@ -53,7 +53,12 @@ impl Building {
                     *timer += update.since_last.secs();
                 }
             }
-            Building::Submitter { .. } => todo!(),
+            Building::Submitter { item, contents } => {
+                if &item.components == contents.borrow().deref() {
+                    contents.borrow_mut().clear();
+                    // TODO: point
+                }
+            }
         }
     }
 
@@ -76,7 +81,10 @@ impl Building {
                     .get(target_item)
                     .copied()
                     .unwrap_or_default();
-                let incoming_trains = trains.iter().filter(|t| t.path.last().unwrap() == self_position).count();
+                let incoming_trains = trains
+                    .iter()
+                    .filter(|t| t.path.last().unwrap() == self_position)
+                    .count();
 
                 existing_count + incoming_trains < desired_count
             }

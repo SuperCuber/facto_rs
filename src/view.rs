@@ -9,30 +9,50 @@ use nannou::{
 use crate::{constants::*, model::*};
 
 impl GridItem {
+    pub fn draw_rail(&self, draw: &Draw) {
+        match self {
+            GridItem::Building(_, direction) => {
+                draw_rail(
+                    &draw.rotate((*direction).into()),
+                    &Orientation::Horizontal,
+                    true,
+                );
+            }
+            GridItem::Rail(orientation) => draw_rail(draw, orientation, false),
+            GridItem::Intersection(_, intersection_type) => {
+                let draw_rotated = draw.rotate(intersection_type.rotation());
+
+                draw_rail(&draw_rotated, &Orientation::Vertical, false);
+                draw_rail(
+                    &draw_rotated,
+                    &Orientation::Horizontal,
+                    intersection_type.is_triple(),
+                );
+            }
+        }
+    }
+
     pub fn draw(&self, draw: &Draw) {
-        draw.rect()
-            .no_fill()
-            .w_h(CELL_SIZE, CELL_SIZE)
-            .stroke_color(RED)
-            .stroke_weight(1.0);
+        // draw.rect()
+        //     .no_fill()
+        //     .w_h(CELL_SIZE, CELL_SIZE)
+        //     .stroke_color(RED)
+        //     .stroke_weight(1.0);
 
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, *direction),
-            GridItem::Rail(orientation) => draw_rail(draw, orientation, false),
             GridItem::Intersection(i, i_type) => draw_intersection(draw, &i.borrow(), i_type),
+            GridItem::Rail(..) => {}
         }
     }
 }
 
 pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
-    let draw_rotated = draw.rotate(direction.into());
-
     let building_frame = {
         let offset = -(CELL_SIZE - BUILDING_SIZE) / 4.0;
         let center = Vec2::new(offset, 1.0).rotate(direction.into());
         Rect::from_xy_wh(center, (BUILDING_SIZE, BUILDING_SIZE).into())
     };
-    draw_rail(&draw_rotated, &Orientation::Horizontal, true);
 
     match b {
         Building::Spawner { item, timer } => {
@@ -68,8 +88,8 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
             let timer = timer.borrow();
             draw.rect()
                 .xy(building_frame.xy())
-                .color(soften(item.color))
-                .wh(building_frame.wh());
+                .wh(building_frame.wh())
+                .color(soften(item.color));
             draw_loading_square_frame(
                 &draw.xy(building_frame.xy()),
                 item.color,
@@ -101,7 +121,45 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
                 }
             }
         }
-        Building::Submitter { .. } => todo!(),
+        Building::Submitter { item, contents } => {
+            let mut point = Vec2::X * BUILDING_SIZE / 3.0 * 2.0;
+            let mut points = vec![];
+
+            const SIDES: usize = 6;
+            for _ in 0..SIDES {
+                points.push(point);
+                point = point.rotate(PI * 2.0 / (SIDES as f32));
+            }
+
+            draw.xy(building_frame.xy())
+                .polygon()
+                .points(points)
+                .rotate(direction.into())
+                .color(item.color);
+
+            let items_frame = building_frame.pad(5.0 * SIZE_UNIT);
+            let mut position = (0, 0);
+            let item_frame = Rect::from_wh(items_frame.wh() / INVENTORY_ITEM_SQUARE_SIDE as f32)
+                .top_left_of(items_frame);
+            for (item, &count) in contents.borrow().iter() {
+                for _ in 0..count {
+                    let position_px = Vec2::new(position.0 as f32, position.1 as f32);
+                    let item_frame = item_frame.shift(item_frame.wh() * position_px);
+                    draw.rect()
+                        .xy(item_frame.xy())
+                        .wh(item_frame.pad(2.0 * SIZE_UNIT).wh())
+                        .stroke(item.color)
+                        .stroke_weight(1.0 * SIZE_UNIT)
+                        .color(soften(item.color));
+
+                    position.0 += 1;
+                    if position.0 >= INVENTORY_ITEM_SQUARE_SIDE {
+                        position.1 -= 1;
+                        position.0 = 0;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -121,11 +179,13 @@ fn draw_rail(draw: &Draw, orientation: &Orientation, half: bool) {
     draw_rotated
         .y(BUILDING_SIZE / 6.0)
         .line()
+        .weight(2.0 * SIZE_UNIT)
         .points(start, cell_frame.mid_right())
         .color(BLACK);
     draw_rotated
         .y(-BUILDING_SIZE / 6.0)
         .line()
+        .weight(2.0 * SIZE_UNIT)
         .points(start, cell_frame.mid_right())
         .color(BLACK);
 }
@@ -135,17 +195,9 @@ fn draw_intersection(
     _intersection: &Intersection,
     intersection_type: &IntersectionType,
 ) {
-    let draw_rotated = draw.rotate(if let IntersectionType::Triple(dir) = intersection_type {
-        (*dir).into()
-    } else {
-        0.0
-    });
-    let is_triple = intersection_type.is_triple();
+    let draw_rotated = draw.rotate(intersection_type.rotation());
 
-    draw_rail(&draw_rotated, &Orientation::Vertical, false);
-    draw_rail(&draw_rotated, &Orientation::Horizontal, is_triple);
-
-    if is_triple {
+    if intersection_type.is_triple() {
         let point1 = -Vec2::X;
         let point2 = point1.rotate(PI * 2.0 / 3.0);
         let point3 = point2.rotate(PI * 2.0 / 3.0);
@@ -172,7 +224,7 @@ impl Train {
         draw_rotated
             .rect()
             .x(CELL_SIZE * (self.sub_position as f32) - (CELL_SIZE / 2.0))
-            .y(- BUILDING_SIZE / 6.0)
+            .y(-BUILDING_SIZE / 6.0)
             .color(self.item.color)
             .w_h(20.0 * SIZE_UNIT, 10.0 * SIZE_UNIT);
     }

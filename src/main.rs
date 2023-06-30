@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use constants::CELL_SIZE;
 use nannou::prelude::*;
 
@@ -57,11 +55,16 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     for (pos, grid_item) in &model.grid.grid_items {
         let pos = *pos;
-        grid_item.draw(&draw.xy(pos.into()));
+        grid_item.draw_rail(&draw.xy(pos.into()));
     }
 
     for train in &model.grid.trains {
         train.draw(&draw);
+    }
+
+    for (pos, grid_item) in &model.grid.grid_items {
+        let pos = *pos;
+        grid_item.draw(&draw.xy(pos.into()));
     }
 
     draw.to_frame(app, &frame).unwrap();
