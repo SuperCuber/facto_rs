@@ -10,21 +10,21 @@ use crate::{constants::*, model::*};
 
 impl GridItem {
     pub fn draw(&self, draw: &Draw) {
-        // draw.rect()
-        //     .no_fill()
-        //     .w_h(CELL_SIZE, CELL_SIZE)
-        //     .stroke_color(RED)
-        //     .stroke_weight(1.0);
+        draw.rect()
+            .no_fill()
+            .w_h(CELL_SIZE, CELL_SIZE)
+            .stroke_color(RED)
+            .stroke_weight(1.0);
 
         match self {
-            GridItem::Building(b, direction) => draw_building(draw, b, direction),
+            GridItem::Building(b, direction) => draw_building(draw, b, *direction),
             GridItem::Rail(orientation) => draw_rail(draw, orientation, false),
             GridItem::Intersection(i, i_type) => draw_intersection(draw, &i.borrow(), i_type),
         }
     }
 }
 
-pub fn draw_building(draw: &Draw, b: &Building, direction: &Direction) {
+pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
     let draw_rotated = draw.rotate(direction.into());
 
     let building_frame = {
@@ -136,7 +136,7 @@ fn draw_intersection(
     intersection_type: &IntersectionType,
 ) {
     let draw_rotated = draw.rotate(if let IntersectionType::Triple(dir) = intersection_type {
-        dir.into()
+        (*dir).into()
     } else {
         0.0
     });
@@ -167,9 +167,12 @@ fn draw_intersection(
 impl Train {
     pub fn draw(&self, draw: &Draw) {
         let position = &self.path[self.position];
-        draw.xy((*position).into())
+        let direction = self.calculate_direction();
+        let draw_rotated = draw.xy((*position).into()).rotate(direction.into());
+        draw_rotated
             .rect()
-            // .xy(self.sub_position)
+            .x(CELL_SIZE * (self.sub_position as f32) - (CELL_SIZE / 2.0))
+            .y(- BUILDING_SIZE / 6.0)
             .color(self.item.color)
             .w_h(20.0 * SIZE_UNIT, 10.0 * SIZE_UNIT);
     }

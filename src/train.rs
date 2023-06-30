@@ -8,18 +8,53 @@ impl Train {
     /// Returns true if train should be kept
     pub fn update(
         &mut self,
-        _update: &Update,
+        update: &Update,
         grid_items: &mut GridItems,
         _trains: &mut VecDeque<Train>,
     ) -> bool {
-        let mut contents = grid_items
-            .get_mut(self.path.last().unwrap())
-            .expect("train target does not exist")
-            .contents()
-            .expect("train target has no inventory");
+        // Move and then submit in the same tick so that we never have to draw an invalid state
+        self.sub_position += update.since_last.secs();
+        if self.sub_position >= 1.0 {
+            self.sub_position = 0.0;
+            self.position += 1;
+        }
 
-        *contents.entry(self.item.clone()).or_default() += 1;
-        false
+        if self.position + 1 == self.path.len() && self.sub_position >= 0.5 {
+            let mut contents = grid_items
+                .get_mut(self.path.last().unwrap())
+                .expect("train target does not exist")
+                .contents()
+                .expect("train target has no inventory");
+
+            *contents.entry(self.item.clone()).or_default() += 1;
+            false
+        } else {
+            true
+        }
+
+        // match self.position {
+        //     0 => {}
+        //     x if x == self.path.len() => {}
+        //     n => {}
+        // }
+    }
+
+    pub fn calculate_direction(&self) -> Direction {
+        let position = self.path[self.position];
+        if self.sub_position < 0.5 {
+            let previous_position = self
+                .position
+                .checked_sub(1)
+                .and_then(|num| self.path.get(num))
+                .expect("previous position exists in first half of grid");
+            previous_position.direction_towards(position).unwrap()
+        } else {
+            let next_position = self
+                .path
+                .get(self.position + 1)
+                .expect("next position exists in second half of grid");
+            position.direction_towards(*next_position).unwrap()
+        }
     }
 }
 

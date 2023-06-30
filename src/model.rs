@@ -168,8 +168,8 @@ impl From<Position> for Vec2 {
     }
 }
 
-impl From<&Direction> for f32 {
-    fn from(other: &Direction) -> f32 {
+impl From<Direction> for f32 {
+    fn from(other: Direction) -> f32 {
         match other {
             Direction::East => PI / 2.0 * 0.0,
             Direction::North => PI / 2.0 * 1.0,
@@ -215,5 +215,17 @@ impl Add<Direction> for Position {
 impl IntersectionType {
     pub fn is_triple(&self) -> bool {
         matches!(self, IntersectionType::Triple(..))
+    }
+}
+
+impl Position {
+    pub fn direction_towards(self, other: Position) -> Option<Direction> {
+        match (self, other) {
+            (Position(x1, _), Position(x2, _)) if x1 + 1 == x2 => Some(Direction::East),
+            (Position(x1, _), Position(x2, _)) if x1 == x2 + 1 => Some(Direction::West),
+            (Position(_, y1), Position(_, y2)) if y1 + 1 == y2 => Some(Direction::North),
+            (Position(_, y1), Position(_, y2)) if y1 == y2 + 1 => Some(Direction::South),
+            _ => None
+        }
     }
 }

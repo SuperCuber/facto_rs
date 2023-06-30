@@ -20,9 +20,9 @@ impl Building {
                         *timer = 0.0;
                         trains.push_back(Train {
                             item: item.clone(),
-                            path: dbg!(calculate_path(*position, target, grid_items)),
+                            path: calculate_path(*position, target, grid_items),
                             position: 0,
-                            sub_position: 0.0,
+                            sub_position: 0.5,
                         });
                     }
                 } else {
@@ -42,7 +42,7 @@ impl Building {
                             item: item.clone(),
                             path: calculate_path(*position, target, grid_items),
                             position: 0,
-                            sub_position: 0.0,
+                            sub_position: 0.5,
                         });
                     }
                 } else if *timer == 0.0 && &item.components == contents.borrow().deref() {
