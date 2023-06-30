@@ -1,7 +1,7 @@
 use std::{
     cell::RefCell,
     collections::{BTreeMap, VecDeque},
-    ops::DerefMut,
+    ops::{Add, DerefMut},
 };
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
@@ -26,7 +26,7 @@ pub struct Grid {
 pub type GridItems = BTreeMap<Position, GridItem>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Position(pub usize, pub usize);
+pub struct Position(pub isize, pub isize);
 
 #[derive(Debug, Clone)]
 pub enum GridItem {
@@ -85,9 +85,9 @@ pub struct Item {
 #[derive(Clone, Debug)]
 pub struct Train {
     pub item: Item,
-    pub position: Position,
-    pub sub_position: Vec2,
-    pub target: Position,
+    pub path: Vec<Position>,
+    pub position: usize,
+    pub sub_position: f64,
 }
 
 // === Utils ===
@@ -135,6 +135,31 @@ impl GridItem {
             None
         }
     }
+
+    pub fn neighbors(&self, self_position: Position) -> Vec<Position> {
+        match self {
+            GridItem::Building(_, d) => vec![self_position + *d],
+            GridItem::Rail(Orientation::Vertical) => vec![
+                self_position + Direction::North,
+                self_position + Direction::South,
+            ],
+            GridItem::Rail(Orientation::Horizontal) => vec![
+                self_position + Direction::East,
+                self_position + Direction::West,
+            ],
+            GridItem::Intersection(_, IntersectionType::Quad) => vec![
+                self_position + Direction::East,
+                self_position + Direction::West,
+                self_position + Direction::North,
+                self_position + Direction::South,
+            ],
+            GridItem::Intersection(_, IntersectionType::Triple(d)) => vec![
+                self_position + *d,
+                self_position + d.left(),
+                self_position + d.right(),
+            ],
+        }
+    }
 }
 
 impl From<Position> for Vec2 {
@@ -150,6 +175,39 @@ impl From<&Direction> for f32 {
             Direction::North => PI / 2.0 * 1.0,
             Direction::West => PI / 2.0 * 2.0,
             Direction::South => PI / 2.0 * 3.0,
+        }
+    }
+}
+
+impl Direction {
+    fn left(&self) -> Direction {
+        match self {
+            Direction::North => Direction::West,
+            Direction::South => Direction::East,
+            Direction::East => Direction::North,
+            Direction::West => Direction::South,
+        }
+    }
+
+    fn right(&self) -> Direction {
+        match self {
+            Direction::West => Direction::North,
+            Direction::East => Direction::South,
+            Direction::North => Direction::East,
+            Direction::South => Direction::West,
+        }
+    }
+}
+
+impl Add<Direction> for Position {
+    type Output = Position;
+
+    fn add(self, rhs: Direction) -> Self::Output {
+        match rhs {
+            Direction::North => Position(self.0, self.1 + 1),
+            Direction::South => Position(self.0, self.1 - 1),
+            Direction::East => Position(self.0 + 1, self.1),
+            Direction::West => Position(self.0 - 1, self.1),
         }
     }
 }

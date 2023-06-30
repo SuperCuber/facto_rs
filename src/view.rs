@@ -164,6 +164,17 @@ fn draw_intersection(
     }
 }
 
+impl Train {
+    pub fn draw(&self, draw: &Draw) {
+        let position = &self.path[self.position];
+        draw.xy((*position).into())
+            .rect()
+            // .xy(self.sub_position)
+            .color(self.item.color)
+            .w_h(20.0 * SIZE_UNIT, 10.0 * SIZE_UNIT);
+    }
+}
+
 // === Utils ===
 
 fn soften(color: Srgb) -> Srgb {

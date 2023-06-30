@@ -2,7 +2,7 @@ use std::{collections::VecDeque, ops::Deref};
 
 use nannou::prelude::*;
 
-use crate::model::*;
+use crate::{model::*, train::calculate_path};
 
 impl Building {
     pub fn update(
@@ -20,9 +20,9 @@ impl Building {
                         *timer = 0.0;
                         trains.push_back(Train {
                             item: item.clone(),
-                            position: *position,
-                            sub_position: Vec2::ZERO,
-                            target,
+                            path: dbg!(calculate_path(*position, target, grid_items)),
+                            position: 0,
+                            sub_position: 0.0,
                         });
                     }
                 } else {
@@ -40,9 +40,9 @@ impl Building {
                         *timer = 0.0;
                         trains.push_back(Train {
                             item: item.clone(),
-                            position: *position,
-                            sub_position: Vec2::ZERO,
-                            target,
+                            path: calculate_path(*position, target, grid_items),
+                            position: 0,
+                            sub_position: 0.0,
                         });
                     }
                 } else if *timer == 0.0 && &item.components == contents.borrow().deref() {
@@ -76,7 +76,7 @@ impl Building {
                     .get(target_item)
                     .copied()
                     .unwrap_or_default();
-                let incoming_trains = trains.iter().filter(|t| t.target == *self_position).count();
+                let incoming_trains = trains.iter().filter(|t| t.path.last().unwrap() == self_position).count();
 
                 existing_count + incoming_trains < desired_count
             }

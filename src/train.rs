@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{BTreeSet, VecDeque};
 
 use nannou::prelude::*;
 
@@ -13,7 +13,7 @@ impl Train {
         _trains: &mut VecDeque<Train>,
     ) -> bool {
         let mut contents = grid_items
-            .get_mut(&self.target)
+            .get_mut(self.path.last().unwrap())
             .expect("train target does not exist")
             .contents()
             .expect("train target has no inventory");
@@ -21,4 +21,32 @@ impl Train {
         *contents.entry(self.item.clone()).or_default() += 1;
         false
     }
+}
+
+pub fn calculate_path(start: Position, target: Position, grid_items: &GridItems) -> Vec<Position> {
+    let mut queue = VecDeque::new();
+    let mut explored = BTreeSet::new();
+
+    queue.push_back(vec![start]);
+    explored.insert(start);
+
+    while let Some(path) = queue.pop_front() {
+        let last = path.last().unwrap();
+        if last == &target {
+            return path;
+        }
+
+        if let Some(grid_item) = grid_items.get(last) {
+            for neighbor in grid_item.neighbors(*last) {
+                if !explored.contains(&neighbor) {
+                    explored.insert(neighbor);
+                    let mut new_path = path.clone();
+                    new_path.push(neighbor);
+                    queue.push_back(new_path);
+                }
+            }
+        }
+    }
+
+    todo!()
 }
