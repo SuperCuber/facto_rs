@@ -69,5 +69,6 @@ fn center_grid_translation(rect: Rect, grid: &Grid) -> Vec2 {
     let grid_size = std::cmp::max(max_x, max_y) as f32 * CELL_SIZE;
 
     let grid_rect = Rect::from_xy_wh(rect.xy(), (grid_size, grid_size).into());
-    grid_rect.bottom_left()
+    // Make the lines sharp
+    grid_rect.bottom_left().round() + Vec2::new(0.5, 0.5)
 }
