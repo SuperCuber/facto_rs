@@ -99,7 +99,7 @@ pub fn generate() -> (Grid, Vec<Item>) {
                 item: None,
                 cooldown: 0.0,
             }),
-            IntersectionType::Triple(Direction::North),
+            IntersectionType::Corner(Direction::West),
         ),
     );
 

@@ -12,32 +12,44 @@ impl GridItem {
     pub fn draw_rail(&self, draw: &Draw) {
         match self {
             GridItem::Building(_, direction) => {
-                draw_rail(
-                    &draw.rotate((*direction).into()),
-                    &Orientation::Horizontal,
-                    true,
-                );
+                draw_rail(&draw, *direction);
             }
-            GridItem::Rail(orientation) => draw_rail(draw, orientation, false),
+            GridItem::Rail(orientation) => {
+                let (dir1, dir2) = match orientation {
+                    Orientation::Horizontal => (Direction::West, Direction::East),
+                    Orientation::Vertical => (Direction::North, Direction::South),
+                };
+                draw_rail(draw, dir1);
+                draw_rail(draw, dir2);
+            }
             GridItem::Intersection(_, intersection_type) => {
-                let draw_rotated = draw.rotate(intersection_type.rotation());
-
-                draw_rail(&draw_rotated, &Orientation::Vertical, false);
-                draw_rail(
-                    &draw_rotated,
-                    &Orientation::Horizontal,
-                    intersection_type.is_triple(),
-                );
+                match *intersection_type {
+                    IntersectionType::Corner(d) => {
+                        draw_rail(draw, d);
+                        draw_rail(draw, d.right());
+                    }
+                    IntersectionType::Triple(d) => {
+                        draw_rail(draw, d);
+                        draw_rail(draw, d.left());
+                        draw_rail(draw, d.right());
+                    }
+                    IntersectionType::Quad => {
+                        draw_rail(draw, Direction::East);
+                        draw_rail(draw, Direction::West);
+                        draw_rail(draw, Direction::North);
+                        draw_rail(draw, Direction::South);
+                    }
+                };
             }
         }
     }
 
     pub fn draw(&self, draw: &Draw) {
-        // draw.rect()
-        //     .no_fill()
-        //     .w_h(CELL_SIZE, CELL_SIZE)
-        //     .stroke_color(RED)
-        //     .stroke_weight(1.0);
+        draw.rect()
+            .no_fill()
+            .w_h(CELL_SIZE, CELL_SIZE)
+            .stroke_color(RED)
+            .stroke_weight(1.0);
 
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, *direction),
@@ -163,57 +175,34 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
     }
 }
 
-fn draw_rail(draw: &Draw, orientation: &Orientation, half: bool) {
+fn draw_rail(draw: &Draw, direction: Direction) {
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
-    let draw_rotated = match orientation {
-        Orientation::Horizontal => draw.clone(),
-        Orientation::Vertical => draw.rotate(PI / 2.0),
-    };
-
-    let start = if half {
-        cell_frame.xy()
-    } else {
-        cell_frame.mid_left()
-    };
+    let draw_rotated = draw.rotate(direction.into());
 
     draw_rotated
         .y(BUILDING_SIZE / 6.0)
         .line()
         .weight(2.0 * SIZE_UNIT)
-        .points(start, cell_frame.mid_right())
+        .points(cell_frame.xy(), cell_frame.mid_right())
         .color(BLACK);
     draw_rotated
         .y(-BUILDING_SIZE / 6.0)
         .line()
         .weight(2.0 * SIZE_UNIT)
-        .points(start, cell_frame.mid_right())
+        .points(cell_frame.xy(), cell_frame.mid_right())
         .color(BLACK);
 }
 
 fn draw_intersection(
     draw: &Draw,
     _intersection: &Intersection,
-    intersection_type: &IntersectionType,
+    _intersection_type: &IntersectionType,
 ) {
-    let draw_rotated = draw.rotate(intersection_type.rotation());
-
-    if intersection_type.is_triple() {
-        let point1 = -Vec2::X;
-        let point2 = point1.rotate(PI * 2.0 / 3.0);
-        let point3 = point2.rotate(PI * 2.0 / 3.0);
-        draw_rotated
-            .x(BUILDING_SIZE / 18.0)
-            .scale(CELL_SIZE / 3.0)
-            .tri()
-            .points(point1, point2, point3)
-            .color(WHITE);
-    } else {
-        draw_rotated
-            .rect()
-            .w_h(CELL_SIZE / 2.0, CELL_SIZE / 2.0)
-            .rotate(PI / 4.0)
-            .color(WHITE);
-    }
+    draw.rect()
+        .w_h(BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0)
+        .stroke_weight(SIZE_UNIT)
+        .stroke_color(BLACK)
+        .color(DARKGRAY);
 }
 
 impl Train {

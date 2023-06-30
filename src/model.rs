@@ -43,6 +43,8 @@ pub struct Intersection {
 
 #[derive(Debug, Clone)]
 pub enum IntersectionType {
+    /// The other one is clockwise from it
+    Corner(Direction),
     Triple(Direction),
     Quad,
 }
@@ -158,6 +160,10 @@ impl GridItem {
                 self_position + d.left(),
                 self_position + d.right(),
             ],
+            GridItem::Intersection(_, IntersectionType::Corner(d)) => vec![
+                self_position + *d,
+                self_position + d.right(),
+            ],
         }
     }
 }
@@ -180,7 +186,7 @@ impl From<Direction> for f32 {
 }
 
 impl Direction {
-    fn left(&self) -> Direction {
+    pub fn left(&self) -> Direction {
         match self {
             Direction::North => Direction::West,
             Direction::South => Direction::East,
@@ -189,7 +195,7 @@ impl Direction {
         }
     }
 
-    fn right(&self) -> Direction {
+    pub fn right(&self) -> Direction {
         match self {
             Direction::West => Direction::North,
             Direction::East => Direction::South,
@@ -208,20 +214,6 @@ impl Add<Direction> for Position {
             Direction::South => Position(self.0, self.1 - 1),
             Direction::East => Position(self.0 + 1, self.1),
             Direction::West => Position(self.0 - 1, self.1),
-        }
-    }
-}
-
-impl IntersectionType {
-    pub fn is_triple(&self) -> bool {
-        matches!(self, IntersectionType::Triple(..))
-    }
-
-    pub fn rotation(&self) -> f32 {
-        if let IntersectionType::Triple(dir) = self {
-            (*dir).into()
-        } else {
-            0.0
         }
     }
 }
