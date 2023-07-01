@@ -207,17 +207,22 @@ fn draw_intersection(
 }
 
 impl Train {
-
     pub fn draw(&self, draw: &Draw) {
         let position = &self.path[self.position];
         let direction = self.heading();
         let draw_rotated = draw.xy((*position).into()).rotate(direction.into());
+        let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
+
         draw_rotated
             .rect()
-            .x(CELL_SIZE * (self.sub_position as f32) - (CELL_SIZE / 2.0))
+            .x(cell_frame.mid_left().x
+                + CELL_SIZE * (self.sub_position - TRAIN_LENGTH / 2.0) as f32)
             .y(-BUILDING_SIZE / 6.0)
             .color(self.item.color)
-            .w_h(CELL_SIZE * (TRAIN_LENGTH as f32), 10.0 * SIZE_UNIT);
+            .w_h(
+                CELL_SIZE * (TRAIN_LENGTH as f32),
+                CELL_SIZE * (TRAIN_LENGTH as f32) / 2.0,
+            );
     }
 }
 

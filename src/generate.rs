@@ -12,36 +12,38 @@ pub fn generate() -> (Grid, Vec<Item>) {
         id: 1,
         color: Srgb::new(1.0, 0.0, 0.0),
         components: BTreeMap::new(),
-        spawning_time: 3.0,
+        spawning_time: 2.0,
         crafting_time: 7.0,
     };
-    let mut green_components = BTreeMap::new();
-    green_components.insert(red.clone(), 4);
     let green = Item {
         id: 2,
         color: Srgb::new(0.0, 1.0, 0.0),
-        components: green_components,
-        spawning_time: 3.0,
+        components: BTreeMap::new(),
+        spawning_time: 2.0,
         crafting_time: 7.0,
+    };
+    let mut yellow_components = BTreeMap::new();
+    yellow_components.insert(red.clone(), 1);
+    yellow_components.insert(green.clone(), 1);
+    let yellow = Item {
+        id: 3,
+        color: Srgb::new(1.0, 1.0, 0.0),
+        components: yellow_components,
+        spawning_time: 3.0,
+        crafting_time: 4.0,
     };
 
     let mut point_components = BTreeMap::new();
-    point_components.insert(red.clone(), 1);
-    point_components.insert(green.clone(), 1);
+    point_components.insert(yellow.clone(), 1);
     let point = Item {
         id: 0,
-        color: Srgb::new(0.0, 0.0, 1.0),
+        color: Srgb::new(0.0, 0.0, 0.0),
         components: point_components,
         spawning_time: 3.0,
         crafting_time: 7.0,
     };
 
     let mut grid_items = GridItems::new();
-
-    // Main rail
-    for x in 0..5 {
-        grid_items.insert(Position(x, 2), GridItem::Rail(Orientation::Horizontal));
-    }
 
     // Buildings
     grid_items.insert(
@@ -55,10 +57,20 @@ pub fn generate() -> (Grid, Vec<Item>) {
         ),
     );
     grid_items.insert(
+        Position(1, 4),
+        GridItem::Building(
+            Building::Spawner {
+                item: green.clone(),
+                timer: RefCell::new(0.0),
+            },
+            Direction::South,
+        ),
+    );
+    grid_items.insert(
         Position(3, 4),
         GridItem::Building(
             Building::Crafter {
-                item: green.clone(),
+                item: yellow.clone(),
                 contents: RefCell::new(BTreeMap::new()),
                 timer: RefCell::new(0.0),
             },
@@ -66,20 +78,22 @@ pub fn generate() -> (Grid, Vec<Item>) {
         ),
     );
     grid_items.insert(
-        Position(1, 4),
+        Position(3, 0),
         GridItem::Building(
             Building::Submitter {
                 item: point,
                 contents: RefCell::new(BTreeMap::new()),
             },
-            Direction::South,
+            Direction::North,
         ),
     );
 
     // Connect
     grid_items.insert(Position(1, 1), GridItem::Rail(Orientation::Vertical));
     grid_items.insert(Position(1, 3), GridItem::Rail(Orientation::Vertical));
+    grid_items.insert(Position(2, 2), GridItem::Rail(Orientation::Horizontal));
     grid_items.insert(Position(3, 3), GridItem::Rail(Orientation::Vertical));
+    grid_items.insert(Position(3, 1), GridItem::Rail(Orientation::Vertical));
 
     // Intersection
     grid_items.insert(
@@ -99,7 +113,7 @@ pub fn generate() -> (Grid, Vec<Item>) {
                 item: None,
                 cooldown: 0.0,
             }),
-            IntersectionType::Corner(Direction::West),
+            IntersectionType::Quad,
         ),
     );
 
@@ -107,7 +121,7 @@ pub fn generate() -> (Grid, Vec<Item>) {
         grid_items,
         trains: VecDeque::new(),
     };
-    let items = vec![red, green];
+    let items = vec![red, yellow];
 
     (grid, items)
 }

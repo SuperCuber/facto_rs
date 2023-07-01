@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use constants::CELL_SIZE;
 use nannou::prelude::*;
 

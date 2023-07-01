@@ -2,7 +2,7 @@ use std::collections::{BTreeSet, VecDeque};
 
 use nannou::prelude::*;
 
-use crate::{constants::TRAIN_LENGTH, model::*};
+use crate::{constants::*, model::*};
 
 impl Train {
     /// Returns true if train should be kept
@@ -12,14 +12,16 @@ impl Train {
         grid_items: &mut GridItems,
         trains: &mut VecDeque<Train>,
     ) -> bool {
-        if self
-            .next_requirements(grid_items)
-            .iter()
-            .any(|s| s.taken(trains))
-        {
-            dbg!(self.next_requirements(grid_items));
-            // don't move
-            return true;
+        if let Some(boundary) = self.about_to_cross_boundary(update) {
+            if self
+                .next_requirements(grid_items)
+                .iter()
+                .any(|s| s.taken(trains))
+            {
+                self.sub_position = boundary;
+                // don't move
+                return true;
+            }
         }
 
         // Move and then submit in the same tick so that we never have to draw an invalid state
@@ -40,6 +42,22 @@ impl Train {
             false
         } else {
             true
+        }
+    }
+
+    /// Returns Some(waiting_position) if about to cross a boundary, otherwise None
+    fn about_to_cross_boundary(&self, update: &Update) -> Option<f64> {
+        let before = self.sub_position;
+        let after = before + update.since_last.secs();
+
+        if before <= TRAIN_BOUNDARY_1 && after > TRAIN_BOUNDARY_1 {
+            Some(TRAIN_BOUNDARY_1)
+        } else if before <= TRAIN_BOUNDARY_2 && after > TRAIN_BOUNDARY_2 {
+            Some(TRAIN_BOUNDARY_2)
+        } else if before <= 1.0 && after >= 1.0 {
+            Some(1.0)
+        } else {
+            None
         }
     }
 
@@ -103,14 +121,12 @@ impl Train {
     fn current_slot(&self) -> TrainSlot {
         let position = self.path[self.position];
 
-        let part = if (0.0..TRAIN_LENGTH).contains(&self.sub_position) {
+        let part = if self.sub_position <= TRAIN_BOUNDARY_1 {
             SlotPart::Input(self.heading().opposite())
-        } else if (TRAIN_LENGTH..(1.0 - TRAIN_LENGTH)).contains(&self.sub_position) {
+        } else if self.sub_position <= TRAIN_BOUNDARY_2 {
             SlotPart::Middle
-        } else if ((1.0 - TRAIN_LENGTH)..=1.0).contains(&self.sub_position) {
-            SlotPart::Output(self.next_turn().unwrap())
         } else {
-            unreachable!("sub_position not between 0 and 1")
+            SlotPart::Output(self.next_turn().unwrap())
         };
 
         TrainSlot { position, part }
@@ -163,6 +179,6 @@ pub enum SlotPart {
 
 impl TrainSlot {
     fn taken(&self, trains: &VecDeque<Train>) -> bool {
-        dbg!(trains.iter().find(|t| t.current_slot() == *self)).is_some()
+        trains.iter().find(|t| t.current_slot() == *self).is_some()
     }
 }

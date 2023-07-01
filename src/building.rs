@@ -15,7 +15,7 @@ impl Building {
         match self {
             Building::Spawner { item, timer } => {
                 let mut timer = timer.borrow_mut();
-                if *timer > item.spawning_time {
+                if *timer > item.spawning_time && !Building::train_full(*position, trains) {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
                         trains.push_back(Train {
@@ -35,7 +35,7 @@ impl Building {
                 timer,
             } => {
                 let mut timer = timer.borrow_mut();
-                if *timer > item.crafting_time {
+                if *timer > item.crafting_time && !Building::train_full(*position, trains) {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
                         trains.push_back(Train {
@@ -83,12 +83,16 @@ impl Building {
                     .unwrap_or_default();
                 let incoming_trains = trains
                     .iter()
-                    .filter(|t| t.path.last().unwrap() == self_position)
+                    .filter(|t| t.path.last().unwrap() == self_position && &t.item == target_item)
                     .count();
 
                 existing_count + incoming_trains < desired_count
             }
         }
+    }
+
+    fn train_full(position: Position, trains: &VecDeque<Train>) -> bool {
+        trains.iter().any(|t| t.path[t.position] == position)
     }
 }
 
