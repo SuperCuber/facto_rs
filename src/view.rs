@@ -45,11 +45,11 @@ impl GridItem {
     }
 
     pub fn draw(&self, draw: &Draw) {
-        draw.rect()
-            .no_fill()
-            .w_h(CELL_SIZE, CELL_SIZE)
-            .stroke_color(RED)
-            .stroke_weight(1.0);
+        // draw.rect()
+        //     .no_fill()
+        //     .w_h(CELL_SIZE, CELL_SIZE)
+        //     .stroke_color(RED)
+        //     .stroke_weight(1.0);
 
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, *direction),

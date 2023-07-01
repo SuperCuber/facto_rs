@@ -29,8 +29,8 @@ pub fn generate() -> (Grid, Vec<Item>) {
         id: 3,
         color: Srgb::new(1.0, 1.0, 0.0),
         components: yellow_components,
-        spawning_time: 3.0,
-        crafting_time: 4.0,
+        spawning_time: 2.0,
+        crafting_time: 2.5,
     };
 
     let mut point_components = BTreeMap::new();
