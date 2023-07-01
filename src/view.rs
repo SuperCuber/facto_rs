@@ -12,7 +12,7 @@ impl GridItem {
     pub fn draw_rail(&self, draw: &Draw) {
         match self {
             GridItem::Building(_, direction) => {
-                draw_rail(&draw, *direction);
+                draw_rail(draw, *direction);
             }
             GridItem::Rail(orientation) => {
                 let (dir1, dir2) = match orientation {
@@ -198,24 +198,26 @@ fn draw_intersection(
     _intersection: &Intersection,
     _intersection_type: &IntersectionType,
 ) {
+    let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
     draw.rect()
-        .w_h(BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0)
+        .wh(cell_frame.pad((TRAIN_LENGTH as f32) * CELL_SIZE).wh())
         .stroke_weight(SIZE_UNIT)
         .stroke_color(BLACK)
         .color(DARKGRAY);
 }
 
 impl Train {
+
     pub fn draw(&self, draw: &Draw) {
         let position = &self.path[self.position];
-        let direction = self.calculate_direction();
+        let direction = self.heading();
         let draw_rotated = draw.xy((*position).into()).rotate(direction.into());
         draw_rotated
             .rect()
             .x(CELL_SIZE * (self.sub_position as f32) - (CELL_SIZE / 2.0))
             .y(-BUILDING_SIZE / 6.0)
             .color(self.item.color)
-            .w_h(20.0 * SIZE_UNIT, 10.0 * SIZE_UNIT);
+            .w_h(CELL_SIZE * (TRAIN_LENGTH as f32), 10.0 * SIZE_UNIT);
     }
 }
 

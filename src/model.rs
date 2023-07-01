@@ -43,13 +43,14 @@ pub struct Intersection {
 
 #[derive(Debug, Clone)]
 pub enum IntersectionType {
-    /// The other one is clockwise from it
+    /// Direction is the left corner
     Corner(Direction),
+    /// Direction is the middle of the three
     Triple(Direction),
     Quad,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
     North,
     South,
@@ -160,10 +161,9 @@ impl GridItem {
                 self_position + d.left(),
                 self_position + d.right(),
             ],
-            GridItem::Intersection(_, IntersectionType::Corner(d)) => vec![
-                self_position + *d,
-                self_position + d.right(),
-            ],
+            GridItem::Intersection(_, IntersectionType::Corner(d)) => {
+                vec![self_position + *d, self_position + d.right()]
+            }
         }
     }
 }
@@ -201,6 +201,15 @@ impl Direction {
             Direction::East => Direction::South,
             Direction::North => Direction::East,
             Direction::South => Direction::West,
+        }
+    }
+
+    pub fn opposite(&self) -> Direction {
+        match self {
+            Direction::North => Direction::South,
+            Direction::South => Direction::North,
+            Direction::East => Direction::West,
+            Direction::West => Direction::East,
         }
     }
 }
