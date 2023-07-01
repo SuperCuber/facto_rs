@@ -200,7 +200,7 @@ fn draw_intersection(
 ) {
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
     draw.rect()
-        .wh(cell_frame.pad((TRAIN_LENGTH as f32) * CELL_SIZE).wh())
+        .wh(cell_frame.pad((SLOT_LENGTH as f32) * CELL_SIZE).wh())
         .stroke_weight(SIZE_UNIT)
         .stroke_color(BLACK)
         .color(DARKGRAY);
