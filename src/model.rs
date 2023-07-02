@@ -80,9 +80,8 @@ pub enum Building {
 pub struct Item {
     pub id: usize,
     pub color: Srgb,
-    pub components: BTreeMap<Item, usize>,
-    pub spawning_time: f64,
-    pub crafting_time: f64,
+    pub components: Option<BTreeMap<Item, usize>>,
+    pub time: f64,
 }
 
 #[derive(Clone, Debug)]

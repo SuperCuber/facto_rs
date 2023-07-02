@@ -11,16 +11,14 @@ pub fn generate() -> (Grid, Vec<Item>) {
     let red = Item {
         id: 1,
         color: Srgb::new(1.0, 0.0, 0.0),
-        components: BTreeMap::new(),
-        spawning_time: 2.0,
-        crafting_time: 7.0,
+        components: None,
+        time: 2.0,
     };
     let green = Item {
         id: 2,
         color: Srgb::new(0.0, 1.0, 0.0),
-        components: BTreeMap::new(),
-        spawning_time: 2.0,
-        crafting_time: 7.0,
+        components: None,
+        time: 2.0,
     };
     let mut yellow_components = BTreeMap::new();
     yellow_components.insert(red.clone(), 1);
@@ -28,9 +26,8 @@ pub fn generate() -> (Grid, Vec<Item>) {
     let yellow = Item {
         id: 3,
         color: Srgb::new(1.0, 1.0, 0.0),
-        components: yellow_components,
-        spawning_time: 2.0,
-        crafting_time: 2.5,
+        components: Some(yellow_components),
+        time: 2.5,
     };
 
     let mut point_components = BTreeMap::new();
@@ -38,9 +35,8 @@ pub fn generate() -> (Grid, Vec<Item>) {
     let point = Item {
         id: 0,
         color: Srgb::new(0.0, 0.0, 0.0),
-        components: point_components,
-        spawning_time: 3.0,
-        crafting_time: 7.0,
+        components: Some(point_components),
+        time: 0.0,
     };
 
     let mut grid_items = GridItems::new();
@@ -60,7 +56,7 @@ pub fn generate() -> (Grid, Vec<Item>) {
         Position(1, 4),
         GridItem::Building(
             Building::Spawner {
-                item: green.clone(),
+                item: green,
                 timer: RefCell::new(0.0),
             },
             Direction::South,

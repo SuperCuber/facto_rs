@@ -179,6 +179,6 @@ pub enum SlotPart {
 
 impl TrainSlot {
     fn taken(&self, trains: &VecDeque<Train>) -> bool {
-        trains.iter().find(|t| t.current_slot() == *self).is_some()
+        trains.iter().any(|t| t.current_slot() == *self)
     }
 }

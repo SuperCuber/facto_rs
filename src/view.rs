@@ -79,7 +79,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
                 radii: (BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0).into(),
                 start_angle: Angle::radians(0.0),
                 sweep_angle: Angle::two_pi()
-                    * animation_completion(*timer, item.spawning_time, 0.5)
+                    * animation_completion(*timer, item.time, 0.5)
                     // For some reason rendering is slightly off, this fixes
                     * 1.05,
                 x_rotation: Angle::radians(0.0),
@@ -105,7 +105,7 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
             draw_loading_square_frame(
                 &draw.xy(building_frame.xy()),
                 item.color,
-                animation_completion(*timer, item.crafting_time, 0.5),
+                animation_completion(*timer, item.time, 0.5),
                 BUILDING_SIZE,
                 2.0 * SIZE_UNIT,
             );

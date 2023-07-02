@@ -15,7 +15,7 @@ impl Building {
         match self {
             Building::Spawner { item, timer } => {
                 let mut timer = timer.borrow_mut();
-                if *timer > item.spawning_time && !Building::train_full(*position, trains) {
+                if *timer > item.time && !Building::train_full(*position, trains) {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
                         trains.push_back(Train {
@@ -35,7 +35,7 @@ impl Building {
                 timer,
             } => {
                 let mut timer = timer.borrow_mut();
-                if *timer > item.crafting_time && !Building::train_full(*position, trains) {
+                if *timer > item.time && !Building::train_full(*position, trains) {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
                         trains.push_back(Train {
@@ -45,7 +45,7 @@ impl Building {
                             sub_position: 0.5,
                         });
                     }
-                } else if *timer == 0.0 && &item.components == contents.borrow().deref() {
+                } else if *timer == 0.0 && item.components.as_ref() == Some(contents.borrow().deref()) {
                     // Only start if we have contents, consuming them in the process
                     contents.borrow_mut().clear();
                     *timer += update.since_last.secs();
@@ -54,7 +54,7 @@ impl Building {
                 }
             }
             Building::Submitter { item, contents } => {
-                if &item.components == contents.borrow().deref() {
+                if item.components.as_ref() == Some(contents.borrow().deref()) {
                     contents.borrow_mut().clear();
                     // TODO: point
                 }
@@ -73,7 +73,8 @@ impl Building {
             Building::Crafter { item, contents, .. } | Building::Submitter { item, contents } => {
                 let desired_count = item
                     .components
-                    .get(target_item)
+                    .as_ref()
+                    .and_then(|c| c.get(target_item))
                     .copied()
                     .unwrap_or_default();
                 let existing_count = contents
