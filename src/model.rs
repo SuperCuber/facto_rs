@@ -80,7 +80,7 @@ pub enum Building {
 pub struct Item {
     pub id: usize,
     pub color: Srgb,
-    pub components: Option<BTreeMap<Item, usize>>,
+    pub components: BTreeMap<Item, usize>,
     pub time: f64,
 }
 
