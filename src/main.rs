@@ -1,12 +1,9 @@
-#![allow(dead_code)]
-
 use constants::CELL_SIZE;
 use nannou::prelude::*;
 
 mod building;
 mod constants;
 mod generate;
-mod intersection;
 mod model;
 mod train;
 mod view;
@@ -30,6 +27,7 @@ fn model(app: &App) -> Model {
         window,
         grid,
         items,
+        score: 0,
     }
 }
 
@@ -43,7 +41,13 @@ fn update(_app: &App, model: &mut Model, mut update: Update) {
     }
 
     for (pos, grid_item) in &model.grid.grid_items {
-        grid_item.update(pos, &update, &model.grid.grid_items, &mut model.grid.trains);
+        grid_item.update(
+            pos,
+            &update,
+            &model.grid.grid_items,
+            &mut model.grid.trains,
+            &mut model.score,
+        );
     }
 }
 
@@ -71,6 +75,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
     }
 
     view::draw_recipes(&draw, frame.rect(), &model.items);
+    view::draw_score(&draw, frame.rect(), model);
 
     draw_grid.to_frame(app, &frame).unwrap();
 }

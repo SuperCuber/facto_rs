@@ -14,6 +14,7 @@ pub struct Model {
     pub window: window::Id,
     pub grid: Grid,
     pub items: Vec<Item>,
+    pub score: usize,
 }
 
 // === Grid ===
@@ -45,6 +46,7 @@ pub struct Intersection {
 #[derive(Debug, Clone)]
 pub enum IntersectionType {
     /// Direction is the left corner
+    #[allow(dead_code)]
     Corner(Direction),
     /// Direction is the middle of the three
     Triple(Direction),
@@ -119,9 +121,10 @@ impl GridItem {
         update: &Update,
         grid_items: &GridItems,
         trains: &mut VecDeque<Train>,
+        score: &mut usize,
     ) {
         match self {
-            GridItem::Building(b, _) => b.update(position, update, grid_items, trains),
+            GridItem::Building(b, _) => b.update(position, update, grid_items, trains, score),
             GridItem::Rail(..) => {}
             GridItem::Intersection(_) => {}
         }

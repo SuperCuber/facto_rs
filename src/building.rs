@@ -11,6 +11,7 @@ impl Building {
         update: &Update,
         grid_items: &GridItems,
         trains: &mut VecDeque<Train>,
+        score: &mut usize,
     ) {
         match self {
             Building::Spawner { item, timer } => {
@@ -56,7 +57,7 @@ impl Building {
             Building::Submitter { item, contents } => {
                 if &item.components == contents.borrow().deref() {
                     contents.borrow_mut().clear();
-                    // TODO: point
+                    *score += 1;
                 }
             }
         }

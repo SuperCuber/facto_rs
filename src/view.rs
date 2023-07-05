@@ -223,7 +223,9 @@ impl Train {
 }
 
 pub fn draw_recipes(draw: &Draw, window: Rect, items: &[Item]) {
-    let item_count = items.iter()
+    #[allow(clippy::iter_count)]
+    let item_count = items
+        .iter()
         // .filter(|i| !i.components.is_empty())
         .count();
     let max_components = items
@@ -272,6 +274,16 @@ pub fn draw_recipes(draw: &Draw, window: Rect, items: &[Item]) {
             }
         }
     }
+}
+
+pub fn draw_score(draw: &Draw, screen: Rect, model: &Model) {
+    let score_frame = Rect::from_w_h(200.0, 100.0).bottom_right_of(screen.pad(10.0));
+    draw.text(&format!("{}", model.score))
+        .xy(score_frame.xy())
+        .wh(score_frame.wh())
+        .font_size(72)
+        .align_text_bottom()
+        .right_justify();
 }
 
 // === Utils ===
