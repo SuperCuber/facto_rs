@@ -9,7 +9,7 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use crate::{constants::*, model::*};
 
 pub fn generate() -> (Grid, Vec<Item>) {
-    let mut rng = StdRng::seed_from_u64(0);
+    let mut rng = StdRng::seed_from_u64(1);
     let items = generate_recipes(&mut rng);
     // dbg!(&items);
     let grid_items = generate_grid_items(&items, &mut rng);

@@ -52,25 +52,27 @@ fn event(_app: &App, _model: &mut Model, _event: WindowEvent) {}
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
     let (translation, scale) = center_grid_translation_scale(app.window_rect(), &model.grid);
-    let draw = draw.xy(translation).scale(scale);
+    let draw_grid = draw.xy(translation).scale(scale);
 
-    draw.background().color(GREY);
+    draw_grid.background().color(GREY);
 
     for (pos, grid_item) in &model.grid.grid_items {
         let pos = *pos;
-        grid_item.draw_rail(&draw.xy(pos.into()));
+        grid_item.draw_rail(&draw_grid.xy(pos.into()));
     }
 
     for train in &model.grid.trains {
-        train.draw(&draw);
+        train.draw(&draw_grid);
     }
 
     for (pos, grid_item) in &model.grid.grid_items {
         let pos = *pos;
-        grid_item.draw(&draw.xy(pos.into()));
+        grid_item.draw(&draw_grid.xy(pos.into()));
     }
 
-    draw.to_frame(app, &frame).unwrap();
+    view::draw_recipes(&draw, frame.rect(), &model.items);
+
+    draw_grid.to_frame(app, &frame).unwrap();
 }
 
 fn center_grid_translation_scale(rect: Rect, grid: &Grid) -> (Vec2, f32) {
@@ -92,7 +94,7 @@ fn center_grid_translation_scale(rect: Rect, grid: &Grid) -> (Vec2, f32) {
     } else {
         rect.h()
     };
-    let new_cell_size = min_dimension / (grid_size+1) as f32;
+    let new_cell_size = min_dimension / (grid_size + 1) as f32;
 
     (translation, new_cell_size / CELL_SIZE)
 }

@@ -193,10 +193,7 @@ fn draw_rail(draw: &Draw, direction: Direction) {
         .color(BLACK);
 }
 
-fn draw_intersection(
-    draw: &Draw,
-    _intersection_type: &IntersectionType,
-) {
+fn draw_intersection(draw: &Draw, _intersection_type: &IntersectionType) {
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);
     draw.rect()
         .wh(cell_frame.pad((SLOT_LENGTH as f32) * CELL_SIZE).wh())
@@ -222,6 +219,58 @@ impl Train {
                 CELL_SIZE * (TRAIN_LENGTH as f32),
                 CELL_SIZE * (TRAIN_LENGTH as f32) / 2.0,
             );
+    }
+}
+
+pub fn draw_recipes(draw: &Draw, window: Rect, items: &[Item]) {
+    let item_count = items.iter()
+        // .filter(|i| !i.components.is_empty())
+        .count();
+    let max_components = items
+        .iter()
+        .map(|i| i.components.values().sum::<usize>())
+        .max()
+        .unwrap();
+    let recipe_frame_contents_size =
+        Vec2::new(((max_components * 2) + 1) as f32, item_count as f32)
+            * Vec2::new(ITEM_RECIPE_SIZE, RECIPE_ROW_HEIGHT);
+
+    // let top_right = window.top_right();
+    // let items_frame = Rect::from_corners(top_right - recipe_frame_contents_size, top_right);
+
+    for (line, item) in items
+        .iter()
+        // .filter(|i| !i.components.is_empty())
+        .enumerate()
+    {
+        let row_frame = Rect::from_w_h(recipe_frame_contents_size.x, RECIPE_ROW_HEIGHT)
+            .align_top_of(window)
+            .align_right_of(window)
+            .shift_y(-RECIPE_ROW_HEIGHT * line as f32)
+            .pad(RECIPE_ROW_HEIGHT / 10.0);
+
+        let result_frame = Rect::from_w_h(ITEM_RECIPE_SIZE, ITEM_RECIPE_SIZE)
+            .align_middle_y_of(row_frame)
+            .align_left_of(row_frame);
+
+        draw.rect()
+            .xy(result_frame.xy())
+            .wh(result_frame.wh())
+            .color(soften(item.color))
+            .stroke(item.color);
+
+        let mut component_frame = result_frame;
+        for (component, &count) in &item.components {
+            for _ in 0..count {
+                component_frame = component_frame.shift_x(ITEM_RECIPE_SIZE * 2.0);
+
+                draw.rect()
+                    .xy(component_frame.xy())
+                    .wh(component_frame.wh())
+                    .color(soften(component.color))
+                    .stroke(component.color);
+            }
+        }
     }
 }
 
