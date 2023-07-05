@@ -18,4 +18,3 @@ pub const MAX_SPAWNABLE_ITEMS: usize = 3;
 pub const MAX_COMPONENTS: usize = 5;
 pub const MIN_ITEM_TIME: f64 = 1.0;
 pub const MAX_ITEM_TIME: f64 = 5.0;
-pub const CELLS_PER_BUILDING: f32 = 20.0;

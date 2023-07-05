@@ -22,7 +22,7 @@ impl GridItem {
                 draw_rail(draw, dir1);
                 draw_rail(draw, dir2);
             }
-            GridItem::Intersection(_, intersection_type) => {
+            GridItem::Intersection(intersection_type) => {
                 match *intersection_type {
                     IntersectionType::Corner(d) => {
                         draw_rail(draw, d);
@@ -53,7 +53,7 @@ impl GridItem {
 
         match self {
             GridItem::Building(b, direction) => draw_building(draw, b, *direction),
-            GridItem::Intersection(i, i_type) => draw_intersection(draw, &i.borrow(), i_type),
+            GridItem::Intersection(i_type) => draw_intersection(draw, i_type),
             GridItem::Rail(..) => {}
         }
     }
@@ -195,7 +195,6 @@ fn draw_rail(draw: &Draw, direction: Direction) {
 
 fn draw_intersection(
     draw: &Draw,
-    _intersection: &Intersection,
     _intersection_type: &IntersectionType,
 ) {
     let cell_frame = Rect::from_w_h(CELL_SIZE, CELL_SIZE);

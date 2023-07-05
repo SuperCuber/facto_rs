@@ -1,10 +1,11 @@
 use std::{
     cell::RefCell,
     collections::{BTreeMap, VecDeque},
-    ops::{Add, DerefMut},
+    ops::{Add, DerefMut, Mul},
 };
 
 use nannou::{lyon::lyon_tessellation::Orientation, prelude::*};
+use rand::{distributions::Standard, prelude::Distribution};
 
 use crate::constants::CELL_SIZE;
 
@@ -32,7 +33,7 @@ pub struct Position(pub isize, pub isize);
 pub enum GridItem {
     Building(Building, Direction),
     Rail(Orientation),
-    Intersection(RefCell<Intersection>, IntersectionType),
+    Intersection(IntersectionType),
 }
 
 #[derive(Debug, Clone)]
@@ -122,7 +123,7 @@ impl GridItem {
         match self {
             GridItem::Building(b, _) => b.update(position, update, grid_items, trains),
             GridItem::Rail(..) => {}
-            GridItem::Intersection(i, _) => i.borrow_mut().update(update),
+            GridItem::Intersection(_) => {}
         }
     }
 
@@ -149,18 +150,18 @@ impl GridItem {
                 self_position + Direction::East,
                 self_position + Direction::West,
             ],
-            GridItem::Intersection(_, IntersectionType::Quad) => vec![
+            GridItem::Intersection(IntersectionType::Quad) => vec![
                 self_position + Direction::East,
                 self_position + Direction::West,
                 self_position + Direction::North,
                 self_position + Direction::South,
             ],
-            GridItem::Intersection(_, IntersectionType::Triple(d)) => vec![
+            GridItem::Intersection(IntersectionType::Triple(d)) => vec![
                 self_position + *d,
                 self_position + d.left(),
                 self_position + d.right(),
             ],
-            GridItem::Intersection(_, IntersectionType::Corner(d)) => {
+            GridItem::Intersection(IntersectionType::Corner(d)) => {
                 vec![self_position + *d, self_position + d.right()]
             }
         }
@@ -211,6 +212,18 @@ impl Direction {
             Direction::West => Direction::East,
         }
     }
+
+    pub fn to_position(self) -> Position {
+        // I'm lazy
+        Position(0, 0) + self
+    }
+
+    pub fn to_orientation(self) -> Orientation {
+        match self {
+            Direction::North | Direction::South => Orientation::Vertical,
+            Direction::East | Direction::West => Orientation::Horizontal,
+        }
+    }
 }
 
 impl Add<Direction> for Position {
@@ -226,6 +239,14 @@ impl Add<Direction> for Position {
     }
 }
 
+impl Mul<isize> for Position {
+    type Output = Position;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        Position(self.0 * rhs, self.1 * rhs)
+    }
+}
+
 impl Position {
     pub fn direction_towards(self, other: Position) -> Option<Direction> {
         match (self, other) {
@@ -234,6 +255,18 @@ impl Position {
             (Position(_, y1), Position(_, y2)) if y1 + 1 == y2 => Some(Direction::North),
             (Position(_, y1), Position(_, y2)) if y1 == y2 + 1 => Some(Direction::South),
             _ => None,
+        }
+    }
+}
+
+impl Distribution<Direction> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> Direction {
+        match rng.gen_range(1..=4) {
+            1 => Direction::North,
+            2 => Direction::East,
+            3 => Direction::West,
+            4 => Direction::South,
+            _ => unreachable!(),
         }
     }
 }

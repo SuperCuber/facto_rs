@@ -33,7 +33,8 @@ fn model(app: &App) -> Model {
     }
 }
 
-fn update(_app: &App, model: &mut Model, update: Update) {
+fn update(_app: &App, model: &mut Model, mut update: Update) {
+    update.since_last *= 1;
     for _ in 0..model.grid.trains.len() {
         let mut train = model.grid.trains.pop_front().unwrap();
         if train.update(&update, &mut model.grid.grid_items, &mut model.grid.trains) {
@@ -50,8 +51,8 @@ fn event(_app: &App, _model: &mut Model, _event: WindowEvent) {}
 
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
-    let translation = center_grid_translation(app.window_rect(), &model.grid);
-    let draw = draw.xy(translation);
+    let (translation, scale) = center_grid_translation_scale(app.window_rect(), &model.grid);
+    let draw = draw.xy(translation).scale(scale);
 
     draw.background().color(GREY);
 
@@ -72,12 +73,26 @@ fn view(app: &App, model: &Model, frame: Frame) {
     draw.to_frame(app, &frame).unwrap();
 }
 
-fn center_grid_translation(rect: Rect, grid: &Grid) -> Vec2 {
+fn center_grid_translation_scale(rect: Rect, grid: &Grid) -> (Vec2, f32) {
+    let min_x = grid.grid_items.keys().map(|p| p.0).min().unwrap();
+    let min_y = grid.grid_items.keys().map(|p| p.1).min().unwrap();
     let max_x = grid.grid_items.keys().map(|p| p.0).max().unwrap();
     let max_y = grid.grid_items.keys().map(|p| p.1).max().unwrap();
-    let grid_size = std::cmp::max(max_x, max_y) as f32 * CELL_SIZE;
+    let grid_size = std::cmp::max(max_x, max_y) - std::cmp::min(min_x, min_y);
+    let grid_size_px = grid_size as f32 * CELL_SIZE;
+    let grid_offset_px = Vec2::new(-min_x as f32, -min_y as f32) * CELL_SIZE;
+    let grid_rect = Rect::from_xy_wh(
+        rect.xy() + grid_offset_px,
+        (grid_size_px, grid_size_px).into(),
+    );
 
-    let grid_rect = Rect::from_xy_wh(rect.xy(), (grid_size, grid_size).into());
-    // Make the lines sharp
-    grid_rect.bottom_left().round() + Vec2::new(0.5, 0.5)
+    let translation = grid_rect.bottom_left(); //.round() + Vec2::new(0.5, 0.5) // Make the lines sharp
+    let min_dimension = if rect.w() < rect.h() {
+        rect.w()
+    } else {
+        rect.h()
+    };
+    let new_cell_size = min_dimension / (grid_size+1) as f32;
+
+    (translation, new_cell_size / CELL_SIZE)
 }

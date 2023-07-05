@@ -9,122 +9,15 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use crate::{constants::*, model::*};
 
 pub fn generate() -> (Grid, Vec<Item>) {
-    let items = generate_recipes(&mut StdRng::seed_from_u64(3));
+    let mut rng = StdRng::seed_from_u64(0);
+    let items = generate_recipes(&mut rng);
     // dbg!(&items);
-    let buildings = generate_buildings(&items);
-    dbg!(&buildings);
-
-    let red = Item {
-        id: 1,
-        color: Srgb::new(1.0, 0.0, 0.0),
-        components: BTreeMap::new(),
-        time: 2.0,
-    };
-    let green = Item {
-        id: 2,
-        color: Srgb::new(0.0, 1.0, 0.0),
-        components: BTreeMap::new(),
-        time: 2.0,
-    };
-    let mut yellow_components = BTreeMap::new();
-    yellow_components.insert(red.clone(), 1);
-    yellow_components.insert(green.clone(), 1);
-    let yellow = Item {
-        id: 3,
-        color: Srgb::new(1.0, 1.0, 0.0),
-        components: yellow_components,
-        time: 2.5,
-    };
-
-    let mut point_components = BTreeMap::new();
-    point_components.insert(yellow.clone(), 1);
-    let point = Item {
-        id: 0,
-        color: Srgb::new(0.0, 0.0, 0.0),
-        components: point_components,
-        time: 0.0,
-    };
-
-    let mut grid_items = GridItems::new();
-
-    // Buildings
-    grid_items.insert(
-        Position(1, 0),
-        GridItem::Building(
-            Building::Spawner {
-                item: red.clone(),
-                timer: RefCell::new(0.0),
-            },
-            Direction::North,
-        ),
-    );
-    grid_items.insert(
-        Position(1, 4),
-        GridItem::Building(
-            Building::Spawner {
-                item: green,
-                timer: RefCell::new(0.0),
-            },
-            Direction::South,
-        ),
-    );
-    grid_items.insert(
-        Position(3, 4),
-        GridItem::Building(
-            Building::Crafter {
-                item: yellow.clone(),
-                contents: RefCell::new(BTreeMap::new()),
-                timer: RefCell::new(0.0),
-            },
-            Direction::South,
-        ),
-    );
-    grid_items.insert(
-        Position(3, 0),
-        GridItem::Building(
-            Building::Submitter {
-                item: point,
-                contents: RefCell::new(BTreeMap::new()),
-            },
-            Direction::North,
-        ),
-    );
-
-    // Connect
-    grid_items.insert(Position(1, 1), GridItem::Rail(Orientation::Vertical));
-    grid_items.insert(Position(1, 3), GridItem::Rail(Orientation::Vertical));
-    grid_items.insert(Position(2, 2), GridItem::Rail(Orientation::Horizontal));
-    grid_items.insert(Position(3, 3), GridItem::Rail(Orientation::Vertical));
-    grid_items.insert(Position(3, 1), GridItem::Rail(Orientation::Vertical));
-
-    // Intersection
-    grid_items.insert(
-        Position(1, 2),
-        GridItem::Intersection(
-            RefCell::new(Intersection {
-                item: None,
-                cooldown: 0.0,
-            }),
-            IntersectionType::Quad,
-        ),
-    );
-    grid_items.insert(
-        Position(3, 2),
-        GridItem::Intersection(
-            RefCell::new(Intersection {
-                item: None,
-                cooldown: 0.0,
-            }),
-            IntersectionType::Quad,
-        ),
-    );
+    let grid_items = generate_grid_items(&items, &mut rng);
 
     let grid = Grid {
         grid_items,
         trains: VecDeque::new(),
     };
-    let items = vec![red, yellow];
-
     (grid, items)
 }
 
@@ -176,27 +69,82 @@ fn recursive_needed_for(item: &Item) -> Vec<&Item> {
         .collect()
 }
 
-fn generate_buildings(items: &[Item]) -> Vec<Building> {
-    let buildings_for_point = buildings_for(items.last().unwrap());
-    let grid_size = (buildings_for_point.len() as f32).sqrt() * CELLS_PER_BUILDING;
-    let grid_size = grid_size.ceil() as usize;
+fn generate_grid_items(items: &[Item], rng: &mut StdRng) -> GridItems {
+    let mut grid_items = GridItems::new();
 
-    todo!()
+    let buildings = buildings_for(items.last().unwrap());
+    let grid_size = buildings.len() as isize / 2;
+
+    for x in (-grid_size)..grid_size {
+        grid_items.insert(Position(x, 0), GridItem::Rail(Orientation::Horizontal));
+    }
+    for y in (-grid_size)..grid_size {
+        grid_items.insert(Position(0, y), GridItem::Rail(Orientation::Vertical));
+    }
+    grid_items.insert(
+        Position(0, 0),
+        GridItem::Intersection(IntersectionType::Quad),
+    );
+
+    for b in buildings.into_iter() {
+        loop {
+            let direction: Direction = rng.gen();
+            let connection_distance = rng.gen_range(2..grid_size);
+            let connection_position = direction.to_position() * connection_distance;
+            let offset_direction = if rng.gen_bool(0.5) {
+                direction.left()
+            } else {
+                direction.right()
+            };
+
+            let connection_entry = grid_items
+                .get_mut(&connection_position)
+                .expect("intersection or rail");
+            if matches!(connection_entry, GridItem::Intersection(..)) {
+                // taken, try again
+                continue;
+            }
+
+            *connection_entry = GridItem::Intersection(IntersectionType::Triple(offset_direction));
+            let mut building_position = connection_position;
+            let offset = rng.gen_range(1..connection_distance);
+            for _ in 0..offset {
+                building_position = building_position + offset_direction;
+                grid_items.insert(
+                    building_position,
+                    GridItem::Rail(offset_direction.to_orientation()),
+                );
+            }
+            grid_items.insert(
+                building_position,
+                GridItem::Building(b, offset_direction.opposite()),
+            );
+            break;
+        }
+    }
+
+    grid_items
 }
 
-fn buildings_for(item: &Item) -> Vec<Building> {
-    let counts: BTreeMap<_, _> = building_counts_for(item)
+fn buildings_for(root_item: &Item) -> Vec<Building> {
+    let counts: BTreeMap<_, _> = building_counts_for(root_item)
         .into_iter()
         .map(|(k, v)| (k, v.ceil() as usize))
         .collect();
     counts
         .into_iter()
         .flat_map(|(item, count)| {
-            (0..count).map(|_| {
+            (0..count).map(move |_| {
                 if item.components.is_empty() {
                     Building::Spawner {
                         item: item.clone(),
                         timer: RefCell::new(0.0),
+                    }
+                } else if item == root_item {
+                    // points' buildings are actually submitters
+                    Building::Submitter {
+                        item: item.clone(),
+                        contents: RefCell::new(BTreeMap::new()),
                     }
                 } else {
                     Building::Crafter {
