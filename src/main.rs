@@ -51,7 +51,12 @@ fn update(_app: &App, model: &mut Model, mut update: Update) {
     }
 }
 
-fn event(_app: &App, _model: &mut Model, _event: WindowEvent) {}
+fn event(_app: &App, _model: &mut Model, event: WindowEvent) {
+    match event {
+        Closed => std::process::exit(0),
+        _ => {}
+    }
+}
 
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
