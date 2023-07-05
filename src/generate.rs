@@ -9,8 +9,8 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use crate::{constants::*, model::*};
 
 pub fn generate() -> (Grid, Vec<Item>) {
-    let items = generate_recipes(&mut StdRng::seed_from_u64(2));
-    dbg!(&items);
+    let items = generate_recipes(&mut StdRng::seed_from_u64(3));
+    // dbg!(&items);
     let buildings = generate_buildings(&items);
     dbg!(&buildings);
 
@@ -133,12 +133,12 @@ fn generate_recipes(rng: &mut StdRng) -> Vec<Item> {
     // First x items are spawnable (no components), components always smaller idx than parent
     // Last item is "point"
     let starting_hue: f32 = rng.gen();
-    let starting_color = Hsv::new(starting_hue, 1.0, 1.0);
+    let starting_color = Hsv::new(starting_hue * 360.0, 1.0, 1.0);
     let mut items: Vec<Item> = (0..item_count)
         .map(|i| Item {
             id: i,
             color: starting_color
-                .shift_hue((1.0 / item_count as f32) * (i as f32))
+                .shift_hue((360.0 / item_count as f32) * (i as f32))
                 .into(),
             components: BTreeMap::new(),
             time: rng.gen_range(MIN_ITEM_TIME..=MAX_ITEM_TIME),
@@ -177,5 +177,49 @@ fn recursive_needed_for(item: &Item) -> Vec<&Item> {
 }
 
 fn generate_buildings(items: &[Item]) -> Vec<Building> {
+    let buildings_for_point = buildings_for(items.last().unwrap());
+    let grid_size = (buildings_for_point.len() as f32).sqrt() * CELLS_PER_BUILDING;
+    let grid_size = grid_size.ceil() as usize;
+
     todo!()
+}
+
+fn buildings_for(item: &Item) -> Vec<Building> {
+    let counts: BTreeMap<_, _> = building_counts_for(item)
+        .into_iter()
+        .map(|(k, v)| (k, v.ceil() as usize))
+        .collect();
+    counts
+        .into_iter()
+        .flat_map(|(item, count)| {
+            (0..count).map(|_| {
+                if item.components.is_empty() {
+                    Building::Spawner {
+                        item: item.clone(),
+                        timer: RefCell::new(0.0),
+                    }
+                } else {
+                    Building::Crafter {
+                        item: item.clone(),
+                        contents: RefCell::new(BTreeMap::new()),
+                        timer: RefCell::new(0.0),
+                    }
+                }
+            })
+        })
+        .collect()
+}
+
+fn building_counts_for(item: &Item) -> BTreeMap<&Item, f64> {
+    let mut buildings = BTreeMap::new();
+    buildings.insert(item, item.time);
+
+    for (component, count) in &item.components {
+        let component_buildings = building_counts_for(component);
+        for (subcomponent, subcomponent_count) in &component_buildings {
+            *buildings.entry(subcomponent).or_default() += subcomponent_count * (*count as f64);
+        }
+    }
+
+    buildings
 }
