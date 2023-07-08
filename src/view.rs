@@ -237,9 +237,6 @@ pub fn draw_recipes(draw: &Draw, window: Rect, items: &[Item]) {
         Vec2::new(((max_components * 2) + 1) as f32, item_count as f32)
             * Vec2::new(ITEM_RECIPE_SIZE, RECIPE_ROW_HEIGHT);
 
-    // let top_right = window.top_right();
-    // let items_frame = Rect::from_corners(top_right - recipe_frame_contents_size, top_right);
-
     for (line, item) in items
         .iter()
         // .filter(|i| !i.components.is_empty())
@@ -253,7 +250,8 @@ pub fn draw_recipes(draw: &Draw, window: Rect, items: &[Item]) {
 
         let result_frame = Rect::from_w_h(ITEM_RECIPE_SIZE, ITEM_RECIPE_SIZE)
             .align_middle_y_of(row_frame)
-            .align_left_of(row_frame);
+            .align_left_of(row_frame)
+            .shift_x(-ITEM_RECIPE_SIZE / 3.0);
 
         draw.rect()
             .xy(result_frame.xy())
@@ -261,10 +259,45 @@ pub fn draw_recipes(draw: &Draw, window: Rect, items: &[Item]) {
             .color(soften(item.color))
             .stroke(item.color);
 
+        // Point
+        if line + 1 == item_count {
+            draw.text("+1")
+                .xy(result_frame.xy())
+                .wh(result_frame.wh())
+                .align_text_middle_y()
+                .font_size((ITEM_RECIPE_SIZE * 0.65) as u32)
+                .color(BLACK);
+        }
+
+        let equals_frame = result_frame
+            .shift_x(ITEM_RECIPE_SIZE)
+            .pad(ITEM_RECIPE_SIZE / 6.0);
+        draw.line()
+            .y(-ITEM_RECIPE_SIZE / 6.0)
+            .points(equals_frame.mid_left(), equals_frame.mid_right())
+            .color(WHITE);
+        draw.line()
+            .y(ITEM_RECIPE_SIZE / 6.0)
+            .points(equals_frame.mid_left(), equals_frame.mid_right())
+            .color(WHITE);
+
         let mut component_frame = result_frame;
+        let mut is_first = true;
         for (component, &count) in &item.components {
             for _ in 0..count {
-                component_frame = component_frame.shift_x(ITEM_RECIPE_SIZE * 2.0);
+                component_frame = component_frame.shift_x(ITEM_RECIPE_SIZE);
+                if !is_first {
+                    let plus_frame = component_frame.pad(ITEM_RECIPE_SIZE / 6.0);
+                    draw.line()
+                        .points(plus_frame.mid_left(), plus_frame.mid_right())
+                        .color(WHITE);
+                    draw.line()
+                        .points(plus_frame.mid_top(), plus_frame.mid_bottom())
+                        .color(WHITE);
+                }
+                is_first = false;
+
+                component_frame = component_frame.shift_x(ITEM_RECIPE_SIZE);
 
                 draw.rect()
                     .xy(component_frame.xy())
@@ -273,11 +306,30 @@ pub fn draw_recipes(draw: &Draw, window: Rect, items: &[Item]) {
                     .stroke(component.color);
             }
         }
+
+        // Spawned item
+        if item.components.is_empty() {
+            component_frame = component_frame.shift_x(ITEM_RECIPE_SIZE * 2.0);
+            draw.ellipse()
+                .xy(component_frame.xy())
+                .wh(component_frame.wh())
+                .no_fill()
+                .stroke(WHITE)
+                .stroke_weight(2.0 * SIZE_UNIT);
+            draw.line()
+                .points(
+                    component_frame.xy(),
+                    component_frame.xy()
+                        + (component_frame.mid_right() - component_frame.xy()).rotate(1.0) * 0.75,
+                )
+                .color(WHITE)
+                .stroke_weight(2.0 * SIZE_UNIT);
+        }
     }
 }
 
 pub fn draw_score(draw: &Draw, screen: Rect, model: &Model) {
-    let score_frame = Rect::from_w_h(200.0, 100.0).bottom_right_of(screen.pad(10.0));
+    let score_frame = Rect::from_w_h(200.0, 100.0).bottom_right_of(screen.pad(100.0));
     draw.text(&format!("{}", model.score))
         .xy(score_frame.xy())
         .wh(score_frame.wh())

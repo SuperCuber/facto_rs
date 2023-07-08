@@ -1,4 +1,3 @@
-use constants::CELL_SIZE;
 use nannou::prelude::*;
 
 mod building;
@@ -8,6 +7,7 @@ mod model;
 mod train;
 mod view;
 
+use constants::*;
 use model::*;
 
 fn main() {
@@ -104,7 +104,7 @@ fn center_grid_translation_scale(rect: Rect, grid: &Grid) -> (Vec2, f32) {
     } else {
         rect.h()
     };
-    let new_cell_size = min_dimension / (grid_size + 1) as f32;
+    let new_cell_size = min_dimension / (grid_size + SCREEN_GRID_PADDING) as f32;
 
     (translation, new_cell_size / CELL_SIZE)
 }
