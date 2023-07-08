@@ -11,28 +11,27 @@ use constants::*;
 use model::*;
 
 fn main() {
-    nannou::app(model).update(update).run();
+    nannou::app(model).event(process_event).update(update).run();
 }
 
 fn model(app: &App) -> Model {
-    let window = app
-        .new_window()
-        .maximized(true)
-        .view(view)
-        .event(event)
-        .build()
-        .unwrap();
+    let window = app.new_window().maximized(true).view(view).build().unwrap();
     let (grid, items) = generate::generate();
     Model {
         window,
         grid,
         items,
         score: 0,
+        skip_next: false,
     }
 }
 
-fn update(_app: &App, model: &mut Model, mut update: Update) {
-    update.since_last *= 1;
+fn update(_app: &App, model: &mut Model, update: Update) {
+    if model.skip_next {
+        model.skip_next = false;
+        return;
+    }
+
     for _ in 0..model.grid.trains.len() {
         let mut train = model.grid.trains.pop_front().unwrap();
         if train.update(&update, &mut model.grid.grid_items, &mut model.grid.trains) {
@@ -51,9 +50,18 @@ fn update(_app: &App, model: &mut Model, mut update: Update) {
     }
 }
 
-fn event(_app: &App, _model: &mut Model, event: WindowEvent) {
+fn process_event(_app: &App, model: &mut Model, event: Event) {
     match event {
-        Closed => std::process::exit(0),
+        Event::WindowEvent {
+            simple: Some(event),
+            ..
+        } => match event {
+            Closed => std::process::exit(0),
+            _ => {}
+        },
+        Event::Resumed => {
+            model.skip_next = true;
+        }
         _ => {}
     }
 }

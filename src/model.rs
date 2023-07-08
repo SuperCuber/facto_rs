@@ -15,6 +15,7 @@ pub struct Model {
     pub grid: Grid,
     pub items: Vec<Item>,
     pub score: usize,
+    pub skip_next: bool,
 }
 
 // === Grid ===
