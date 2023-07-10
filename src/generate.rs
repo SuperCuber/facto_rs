@@ -138,6 +138,7 @@ fn buildings_for(root_item: &Item) -> Vec<Building> {
                     Building::Spawner {
                         item: item.clone(),
                         timer: RefCell::new(0.0),
+                        spawn_timer: RefCell::new(ITEM_SPAWN_ANIMATION_TIME),
                     }
                 } else if item == root_item {
                     // points' buildings are actually submitters
@@ -150,6 +151,7 @@ fn buildings_for(root_item: &Item) -> Vec<Building> {
                         item: item.clone(),
                         contents: RefCell::new(BTreeMap::new()),
                         timer: RefCell::new(0.0),
+                        spawn_timer: RefCell::new(ITEM_SPAWN_ANIMATION_TIME),
                     }
                 }
             })

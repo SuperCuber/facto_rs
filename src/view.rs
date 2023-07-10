@@ -67,37 +67,71 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
     };
 
     match b {
-        Building::Spawner { item, timer } => {
+        Building::Spawner {
+            item,
+            timer,
+            spawn_timer,
+        } => {
             let timer = timer.borrow();
-            draw.ellipse()
-                .color(soften(item.color))
-                .xy(building_frame.xy())
-                .wh(building_frame.wh());
+            let spawn_timer = spawn_timer.borrow();
 
             let arc = Arc {
                 center: (building_frame.x(), building_frame.y()).into(),
                 radii: (BUILDING_SIZE / 2.0, BUILDING_SIZE / 2.0).into(),
                 start_angle: Angle::radians(0.0),
-                sweep_angle: Angle::two_pi()
-                    * animation_completion(*timer, item.time, 0.5)
-                    // For some reason rendering is slightly off, this fixes
-                    * 1.05,
+                sweep_angle: lerp(
+                    *timer as f32,
+                    0.0,
+                    item.time as f32,
+                    Angle::zero(),
+                    Angle::two_pi(),
+                )
+                .unwrap_or(Angle::two_pi())
+                    * 1.03, // fix visually idk why
                 x_rotation: Angle::radians(0.0),
             };
 
+            // Expand
+            let extra_size = lerp(
+                *spawn_timer,
+                0.0,
+                ITEM_SPAWN_ANIMATION_TIME - ITEM_SPAWN_ANIMATION_TIME_SHRINK,
+                0.0,
+                LOADING_BAR_WEIGHT,
+            )
+            .unwrap_or(0.0);
+            // Shrink
+            let extra_size = extra_size
+                + lerp(
+                    *spawn_timer,
+                    ITEM_SPAWN_ANIMATION_TIME - ITEM_SPAWN_ANIMATION_TIME_SHRINK,
+                    ITEM_SPAWN_ANIMATION_TIME,
+                    LOADING_BAR_WEIGHT,
+                    0.0,
+                )
+                .unwrap_or(0.0);
+
             draw.path()
                 .stroke()
-                .stroke_weight(2.0 * SIZE_UNIT)
-                .color(item.color)
+                .stroke_weight(2.0 * (LOADING_BAR_WEIGHT as f32))
+                .color(LOADING_BAR_COLOR)
                 .points(arc.flattened(0.1).map(|p| Vec2::from((p.x, p.y))));
+
+            draw.ellipse()
+                .color(soften(item.color))
+                .xy(building_frame.xy())
+                .wh(building_frame.pad(-(extra_size as f32)).wh());
         }
 
         Building::Crafter {
             item,
             contents,
             timer,
+            spawn_timer,
         } => {
             let timer = timer.borrow();
+            let spawn_timer = spawn_timer.borrow();
+
             draw.rect()
                 .xy(building_frame.xy())
                 .wh(building_frame.wh())
@@ -105,9 +139,9 @@ pub fn draw_building(draw: &Draw, b: &Building, direction: Direction) {
             draw_loading_square_frame(
                 &draw.xy(building_frame.xy()),
                 item.color,
-                animation_completion(*timer, item.time, 0.5),
+                animation_completion(*timer, item.time, ITEM_SPAWN_ANIMATION_TIME),
                 BUILDING_SIZE,
-                2.0 * SIZE_UNIT,
+                5.0 * SIZE_UNIT,
             );
 
             let items_frame = building_frame.pad(5.0 * SIZE_UNIT);
@@ -377,7 +411,7 @@ fn draw_loading_square_frame(draw: &Draw, color: Srgb, completion: f32, wh: f32,
         }
 
         let line_duration = end - start;
-        let line_end = if end < completion { end } else { completion };
+        let line_end = end.min(completion);
         let t = (line_end - start) / line_duration;
         let to = from * (1.0 - t) + to * t;
         draw.line()
@@ -385,4 +419,20 @@ fn draw_loading_square_frame(draw: &Draw, color: Srgb, completion: f32, wh: f32,
             .color(color)
             .stroke_weight(weight);
     }
+}
+
+fn lerp<R, V>(val: R, range_start: R, range_end: R, val_start: V, val_end: V) -> Option<V>
+where
+    R: std::cmp::PartialOrd + std::ops::Sub<Output = R> + std::ops::Div<Output = R> + Copy,
+    V: std::ops::Sub<Output = V> + std::ops::Mul<R, Output = V> + std::ops::Add<Output = V> + Copy,
+{
+    if val < range_start || range_end < val {
+        return None;
+    }
+
+    let range_size = range_end - range_start;
+    let completion = (val - range_start) / range_size;
+    let val_diff = val_end - val_start;
+
+    Some(val_start + (val_diff * completion))
 }

@@ -2,7 +2,7 @@ use std::{collections::VecDeque, ops::Deref};
 
 use nannou::prelude::*;
 
-use crate::{model::*, train::calculate_path};
+use crate::{constants::*, model::*, train::calculate_path};
 
 impl Building {
     pub fn update(
@@ -14,11 +14,17 @@ impl Building {
         score: &mut usize,
     ) {
         match self {
-            Building::Spawner { item, timer } => {
+            Building::Spawner {
+                item,
+                timer,
+                spawn_timer,
+            } => {
                 let mut timer = timer.borrow_mut();
+                let mut spawn_timer = spawn_timer.borrow_mut();
                 if *timer > item.time && !Building::train_full(*position, trains) {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
+                        *spawn_timer = 0.0;
                         trains.push_back(Train {
                             item: item.clone(),
                             path: calculate_path(*position, target, grid_items),
@@ -28,17 +34,22 @@ impl Building {
                     }
                 } else {
                     *timer += update.since_last.secs();
+                    *spawn_timer =
+                        ITEM_SPAWN_ANIMATION_TIME.min(*spawn_timer + update.since_last.secs());
                 }
             }
             Building::Crafter {
                 item,
                 contents,
                 timer,
+                spawn_timer,
             } => {
                 let mut timer = timer.borrow_mut();
+                let mut spawn_timer = spawn_timer.borrow_mut();
                 if *timer > item.time && !Building::train_full(*position, trains) {
                     if let Some(target) = find_train_target(item, grid_items, trains) {
                         *timer = 0.0;
+                        *spawn_timer = 0.0;
                         trains.push_back(Train {
                             item: item.clone(),
                             path: calculate_path(*position, target, grid_items),
@@ -50,6 +61,8 @@ impl Building {
                     // Only start if we have contents, consuming them in the process
                     contents.borrow_mut().clear();
                     *timer += update.since_last.secs();
+                    *spawn_timer =
+                        ITEM_SPAWN_ANIMATION_TIME.min(*spawn_timer + update.since_last.secs());
                 } else if *timer > 0.0 {
                     *timer += update.since_last.secs();
                 }

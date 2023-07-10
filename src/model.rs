@@ -66,12 +66,18 @@ pub enum Direction {
 pub enum Building {
     Spawner {
         item: Item,
+        /// Counts up 0-->item.time
         timer: RefCell<f64>,
+        /// Counts down ANIMATION_LENGTH-->0
+        spawn_timer: RefCell<f64>,
     },
     Crafter {
         item: Item,
         contents: RefCell<BTreeMap<Item, usize>>,
+        /// Counts up 0-->item.time
         timer: RefCell<f64>,
+        /// Counts down ANIMATION_LENGTH-->0
+        spawn_timer: RefCell<f64>,
     },
     Submitter {
         item: Item,

@@ -53,12 +53,9 @@ fn update(_app: &App, model: &mut Model, update: Update) {
 fn process_event(_app: &App, model: &mut Model, event: Event) {
     match event {
         Event::WindowEvent {
-            simple: Some(event),
+            simple: Some(Closed),
             ..
-        } => match event {
-            Closed => std::process::exit(0),
-            _ => {}
-        },
+        } => std::process::exit(0),
         Event::Resumed => {
             model.skip_next = true;
         }
@@ -107,11 +104,7 @@ fn center_grid_translation_scale(rect: Rect, grid: &Grid) -> (Vec2, f32) {
     );
 
     let translation = grid_rect.bottom_left(); //.round() + Vec2::new(0.5, 0.5) // Make the lines sharp
-    let min_dimension = if rect.w() < rect.h() {
-        rect.w()
-    } else {
-        rect.h()
-    };
+    let min_dimension = rect.w().min(rect.h());
     let new_cell_size = min_dimension / (grid_size + SCREEN_GRID_PADDING) as f32;
 
     (translation, new_cell_size / CELL_SIZE)
