@@ -57,15 +57,16 @@ impl Building {
                             sub_position: 0.5,
                         });
                     }
+                    return; // don't tick spawn timer
                 } else if *timer == 0.0 && &item.components == contents.borrow().deref() {
                     // Only start if we have contents, consuming them in the process
                     contents.borrow_mut().clear();
                     *timer += update.since_last.secs();
-                    *spawn_timer =
-                        ITEM_SPAWN_ANIMATION_TIME.min(*spawn_timer + update.since_last.secs());
                 } else if *timer > 0.0 {
                     *timer += update.since_last.secs();
                 }
+                *spawn_timer =
+                    ITEM_SPAWN_ANIMATION_TIME.min(*spawn_timer + update.since_last.secs());
             }
             Building::Submitter { item, contents } => {
                 if &item.components == contents.borrow().deref() {
